@@ -363,3 +363,10 @@ MigrationBackup/
 FodyWeavers.xsd
 
 *.exe
+
+.vscode/
+
+spice-simulator/*
+!spice-simulator/*.cpp
+!spice-simulator/*.h
+!spice-simulator/*.vcxproj.*
