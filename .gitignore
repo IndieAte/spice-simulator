@@ -365,8 +365,8 @@ FodyWeavers.xsd
 *.exe
 
 .vscode/
+.vs/
 
 spice-simulator/*
 !spice-simulator/*.cpp
 !spice-simulator/*.h
-!spice-simulator/*.vcxproj.*
