@@ -1,8 +1,10 @@
 #pragma once
+
 #include "Node.h"
-#include <vector>
 #include <string>
 
+// Component Structure
+// Base structure for components to be inhertited from
 struct Component {
   std::string name;
 };
