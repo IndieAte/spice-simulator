@@ -5,13 +5,18 @@
 
 struct Component {
   std::string name;
-  std::vector<Node*> nodes;
 };
 
 struct CurrentSource : Component {
   double current;
+
+  Node* in;
+  Node* out;
 };
 
 struct Resistor : Component {
   double resistance;
+
+  Node* node1;
+  Node* node2;
 };
