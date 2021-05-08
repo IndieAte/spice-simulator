@@ -18,7 +18,7 @@ public:
   // getConductance Function
   // Implemented by each derived class, returns the conductance between two
   // nodes, so long as the component connects those nodes
-  virtual double getConductance(int node1, int node2);
+  virtual double getConductance(int p_node1, int p_node2);
 
 protected:
   std::string name;
@@ -33,7 +33,7 @@ public:
     nodeIn{ p_nodeIn }, nodeOut{ p_nodeOut } {}
 
   std::vector<int> getNodes() override;
-  double getConductance(int node1, int node2) override;
+  double getConductance(int p_node1, int p_node2) override;
 
 private:
   double current;
@@ -42,14 +42,14 @@ private:
 
 // Resistor Class
 // Derived from Component, implements a resistor
-class Resistor: public Component{
+class Resistor : public Component{
 public:
   Resistor(std::string p_name, double p_resistance, int p_node1, int p_node2) : 
     Component{ p_name }, resistance{ p_resistance }, node1{ p_node1 },
     node2{ p_node2 } {}
 
   std::vector<int> getNodes() override;
-  double getConductance(int node1, int node2) override;
+  double getConductance(int p_node1, int p_node2) override;
 
 private:
   double resistance;
