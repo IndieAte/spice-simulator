@@ -21,7 +21,7 @@
     <ClCompile Include="Component.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConductionMatrix.cpp">
+    <ClCompile Include="ConductanceMatrix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClInclude Include="Component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ComplexMatrix.h">
+    <ClInclude Include="ConductanceMatrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
