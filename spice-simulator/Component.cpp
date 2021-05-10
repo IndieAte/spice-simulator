@@ -18,12 +18,12 @@ std::vector<double> Component::getProperties() {
 	return properties;
 }
 
-// ======================== CURRENT SOURCE ========================
+// ======================= AC CURRENT SOURCE ======================
 
-std::vector<int> CurrentSource::getNodes() {
+std::vector<int> ACCurrentSource::getNodes() {
 	std::vector<int> nodes;
-	
-	// CurrentSource should return the input node first, output node
+
+	// ACCurrentSource should return the input node first, output node
 	// second to make creating the conduction matrix easier
 	nodes.push_back(nodeIn);
 	nodes.push_back(nodeOut);
@@ -31,11 +31,37 @@ std::vector<int> CurrentSource::getNodes() {
 	return nodes;
 }
 
-double CurrentSource::getConductance(int p_node1, int p_node2) {
+double ACCurrentSource::getConductance(int p_node1, int p_node2) {
 	return 0;
 }
 
-std::vector<double> CurrentSource::getProperties() {
+std::vector<double> ACCurrentSource::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(amplitude);
+	properties.push_back(phase);
+
+	return properties;
+}
+
+// ======================= DC CURRENT SOURCE ======================
+
+std::vector<int> DCCurrentSource::getNodes() {
+	std::vector<int> nodes;
+	
+	// DCCurrentSource should return the input node first, output node
+	// second to make creating the conduction matrix easier
+	nodes.push_back(nodeIn);
+	nodes.push_back(nodeOut);
+
+	return nodes;
+}
+
+double DCCurrentSource::getConductance(int p_node1, int p_node2) {
+	return 0;
+}
+
+std::vector<double> DCCurrentSource::getProperties() {
 	std::vector<double> properties;
 
 	properties.push_back(current);

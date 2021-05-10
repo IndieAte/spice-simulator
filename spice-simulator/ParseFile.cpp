@@ -47,7 +47,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n) {
 			break;
 		}
 		case 'I': {
-			if (v2[1] != v2[2]) v1.push_back(new CurrentSource(v2[0], std::stod(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+			if (v2[1] != v2[2]) v1.push_back(new DCCurrentSource(v2[0], std::stod(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
 			break;
 		}
 		}
