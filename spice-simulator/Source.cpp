@@ -1,8 +1,5 @@
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-
+#include "ConductanceMatrix.h"
 #include "Component.h"
 
 //This function returns a vector of a string that has been split at each space.
@@ -63,7 +60,6 @@ std::vector<Component*> decode_file(std::ifstream &infile, int &n) {
 
 
 int main() {
-
 	//Here the file is read.
 	std::ifstream infile;
 	infile.open("../testCircuit.cir"); 
@@ -76,5 +72,4 @@ int main() {
 	int highest_node = 0;
 	std::vector<Component*> components = decode_file(infile, highest_node);
 	infile.close();
-
 }

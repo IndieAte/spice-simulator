@@ -20,6 +20,11 @@ public:
   // nodes, so long as the component connects those nodes
   virtual double getConductance(int p_node1, int p_node2);
 
+  // getProperties Function
+  // Implemented by each derived class, returns a vector of component properties
+  // to describe it's behaviour
+  virtual std::vector<double> getProperties();
+
 protected:
   std::string name;
 };
@@ -34,6 +39,7 @@ public:
 
   std::vector<int> getNodes() override;
   double getConductance(int p_node1, int p_node2) override;
+  std::vector<double> getProperties() override;
 
 private:
   double current;
@@ -50,6 +56,7 @@ public:
 
   std::vector<int> getNodes() override;
   double getConductance(int p_node1, int p_node2) override;
+  std::vector<double> getProperties() override;
 
 private:
   double resistance;
