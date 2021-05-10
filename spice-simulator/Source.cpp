@@ -29,7 +29,7 @@ std::vector<std::string> string_split(const std::string& s) {
 //is higher.
 int get_node_number(const std::string& s,int &n) {
 	if (s.length() > 1) {
-		int m = std::stoi(s.substr(1,4));
+		int m = std::stoi(s.substr(1,3));
 		if (m > n) n = m;
 		return m;
 	} else {
