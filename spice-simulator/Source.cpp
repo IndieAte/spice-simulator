@@ -5,20 +5,24 @@
 int main() {
 	std::vector<Component*> components;
 
-	CurrentSource i1("I1", 1, 0, 1);
-	Resistor r1("R1", 100, 1, 2);
-	Resistor r2("R2", 200, 2, 0);
+	components.push_back(new CurrentSource("I1", 0.002, 2, 3));
+	components.push_back(new CurrentSource("I2", 0.001, 4, 2));
 
-	components.push_back(&i1);
-	components.push_back(&r1);
-	components.push_back(&r2);
+	components.push_back(new Resistor("R1", 1000, 0, 1));
+	components.push_back(new Resistor("R2", 2000, 1, 2));
+	components.push_back(new Resistor("R3", 1000, 3, 0));
+	components.push_back(new Resistor("R4", 3000, 4, 3));
 
-	Eigen::MatrixXcd conductanceMatrix = getConductanceMatrix(components, 2);
-	Eigen::VectorXcd currentVector = getCurrentVector(components, 2);
+	int numNodes = 4;
 
-	Eigen::VectorXcd voltageVector;
+	Eigen::VectorXcd solution = solveAtFrequency(components, numNodes, 0);
 
-	voltageVector = conductanceMatrix.colPivHouseholderQr().solve(currentVector);
+	for (int i = 0; i < numNodes; i++) {
+		std::cout << "Node " << i + 1 << ": ";
+		std::cout << real(solution(i)) << "V" << std::endl;
+	}
 
-	std::cout << voltageVector << std::endl;
+	for (int i = 0; i < components.size(); i++) {
+		delete(components[i]);
+	}
 }

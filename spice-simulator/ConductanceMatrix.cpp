@@ -60,3 +60,14 @@ VectorXcd getCurrentVector(std::vector<Component*> components, int numNodes) {
 
 	return currentVector;
 }
+
+VectorXcd solveAtFrequency(std::vector<Component*> components, int numNodes, double frequency) {
+	MatrixXcd conductanceMatrix = getConductanceMatrix(components, numNodes);
+	VectorXcd currentVector = getCurrentVector(components, numNodes);
+
+	VectorXcd solution(numNodes);
+
+	solution = conductanceMatrix.colPivHouseholderQr().solve(currentVector);
+
+	return solution;
+}
