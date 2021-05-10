@@ -1,29 +1,25 @@
-#include <iostream>
 #include "ConductanceMatrix.h"
 #include "Component.h"
+#include "ParseFile.h"
 
 int main() {
-	std::vector<Component*> components;
-
-	components.push_back(new CurrentSource("I1", 0.002, 2, 3));
-	components.push_back(new CurrentSource("I2", 0.001, 4, 2));
-
-
-	components.push_back(new Resistor("R1", 1000, 0, 1));
-	components.push_back(new Resistor("R2", 2000, 1, 2));
-	components.push_back(new Resistor("R3", 1000, 3, 0));
-	components.push_back(new Resistor("R4", 3000, 4, 3));
-
-	int numNodes = 4;
-
-	Eigen::VectorXcd solution = solveAtFrequency(components, numNodes, 0);
-
-	for (int i = 0; i < numNodes; i++) {
-		std::cout << "Node " << i + 1 << ": ";
-		std::cout << real(solution(i)) << "V" << std::endl;
+	//Here the file is read.
+	std::ifstream infile;
+	infile.open("../testCircuit.cir"); 
+	if(!infile.is_open()){
+		return EXIT_FAILURE;
 	}
 
-	for (int i = 0; i < components.size(); i++) {
-		delete(components[i]);
+	//Here the highest node number is initialised and parsed into decode_file.
+	//A vector of Component pointers is set to the output of decode_file
+	int highest_node = 0;
+	std::vector<Component*> components = decode_file(infile, highest_node);
+	infile.close();
+
+	Eigen::VectorXcd solution = solveAtFrequency(components, highest_node, 0);
+
+	for (int i = 0; i < highest_node; i++) {
+		std::cout << "Node " << i + 1 << ": ";
+		std::cout << real(solution(i)) << "V" << std::endl;
 	}
 }
