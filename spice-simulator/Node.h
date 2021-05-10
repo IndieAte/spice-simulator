@@ -1,5 +1,7 @@
 #pragma once
 
+struct Component;
+
 #include <iostream>
 #include <vector>
 #include "Component.h"

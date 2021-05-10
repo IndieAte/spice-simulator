@@ -1,5 +1,7 @@
 #pragma once
 
+struct Node;
+
 #include "Node.h"
 #include <string>
 
