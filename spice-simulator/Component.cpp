@@ -12,6 +12,12 @@ double Component::getConductance(int p_node1, int p_node2) {
 	return 0;
 }
 
+std::vector<double> Component::getProperties() {
+	std::vector<double> properties;
+
+	return properties;
+}
+
 // ======================== CURRENT SOURCE ========================
 
 std::vector<int> CurrentSource::getNodes() {
@@ -27,6 +33,14 @@ std::vector<int> CurrentSource::getNodes() {
 
 double CurrentSource::getConductance(int p_node1, int p_node2) {
 	return 0;
+}
+
+std::vector<double> CurrentSource::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(current);
+
+	return properties;
 }
 
 // =========================== RESISTOR ===========================
@@ -48,4 +62,12 @@ double Resistor::getConductance(int p_node1, int p_node2) {
 	} else {
 		return 1 / resistance;
 	}
+}
+
+std::vector<double> Resistor::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(resistance);
+
+	return properties;
 }

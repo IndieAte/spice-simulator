@@ -1,60 +1,29 @@
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-
+#include "ConductanceMatrix.h"
 #include "Component.h"
-#include "Node.h"
-
-
-std::vector<std::string> string_split(const std::string& s) {
-	int c = 0;
-	std::vector<std::string> v;
-
-	v.push_back("");
-	for (int i=0; i<s.length(); i++) {
-		if (s[i] !=  ' ') {
-			v[c] += s[i];
-		} else {
-			v.push_back("");
-			c++;
-		}
-	}
-	return v;
-}
-
-Component* decode_line(std::string line) {
-	std::vector<std::string> v = string_split(line);
-
-	switch(line[0]) {
-		case 'R':
-			std::cout << "R" << std::endl;
-			break;
-		case 'I':
-			std::cout << "I" << std::endl;
-			break;
-	}
-}
-
 
 int main() {
-
-	std::cout << "Test" << std::endl;
-
-
-	std::ifstream infile;
-	infile.open("../testCircuit.cir");
 	std::vector<Component*> components;
- 
-	if(!infile.is_open()){ 
-		return EXIT_FAILURE;
+
+	components.push_back(new CurrentSource("I1", 0.002, 2, 3));
+	components.push_back(new CurrentSource("I2", 0.001, 4, 2));
+
+
+	components.push_back(new Resistor("R1", 1000, 0, 1));
+	components.push_back(new Resistor("R2", 2000, 1, 2));
+	components.push_back(new Resistor("R3", 1000, 3, 0));
+	components.push_back(new Resistor("R4", 3000, 4, 3));
+
+	int numNodes = 4;
+
+	Eigen::VectorXcd solution = solveAtFrequency(components, numNodes, 0);
+
+	for (int i = 0; i < numNodes; i++) {
+		std::cout << "Node " << i + 1 << ": ";
+		std::cout << real(solution(i)) << "V" << std::endl;
 	}
 
-	std::string tmp;
-	while(std::getline(infile,tmp)){
-		components.push_back(decode_line(tmp));
+	for (int i = 0; i < components.size(); i++) {
+		delete(components[i]);
 	}
-
-	infile.close();
-
 }
