@@ -2,6 +2,9 @@
 
 using namespace Eigen;
 
+// updateConductanceMatrix Function
+// Updates the conductance matrix (passed by reference) with the effect of each
+// component as this function is called for it
 void updateConductanceMatrix(MatrixXcd& conductanceMatrix, Component* component) {
 	if (typeid(*component) == typeid(CurrentSource)) {
 		return;
@@ -25,6 +28,9 @@ void updateConductanceMatrix(MatrixXcd& conductanceMatrix, Component* component)
 	}
 }
 
+// updateCurrentVector Function
+// Helper function that updates the current vector (passed by reference), which is only
+// affected by sources and non-linear components
 void updateCurrentVector(VectorXcd& currentVector, Component* component) {
 	if (typeid(*component) == typeid(CurrentSource)) {
 		// Input at 0, Output at 1
@@ -41,6 +47,9 @@ void updateCurrentVector(VectorXcd& currentVector, Component* component) {
 	}
 }
 
+// getConductanceMatrix Function
+// Returns a matrix of complex doubles representing the conductance matrix in the
+// nodal analysis equation
 MatrixXcd getConductanceMatrix(std::vector<Component*> components, int numNodes) {
 	MatrixXcd conductanceMatrix = MatrixXcd::Zero(numNodes, numNodes);
 
@@ -51,6 +60,9 @@ MatrixXcd getConductanceMatrix(std::vector<Component*> components, int numNodes)
 	return conductanceMatrix;
 }
 
+// getCurrentVector Function
+// Returns a vector of complex doubles representing the current vector in the
+// nodal analysis equation
 VectorXcd getCurrentVector(std::vector<Component*> components, int numNodes) {
 	VectorXcd currentVector = VectorXcd::Zero(numNodes);
 
@@ -61,6 +73,9 @@ VectorXcd getCurrentVector(std::vector<Component*> components, int numNodes) {
 	return currentVector;
 }
 
+// solveAtFrequency Function
+// Solves for the voltage vector given a vector of pointers to Components, the number
+// of nodes in the circuit and the frequency to solve for
 VectorXcd solveAtFrequency(std::vector<Component*> components, int numNodes, double frequency) {
 	MatrixXcd conductanceMatrix = getConductanceMatrix(components, numNodes);
 	VectorXcd currentVector = getCurrentVector(components, numNodes);
