@@ -5,6 +5,7 @@
 
 #include "Component.h"
 
+//This function returns a vector of a string that has been split at each space.
 std::vector<std::string> string_split(const std::string& s) {
 	int c = 0;
 	std::vector<std::string> v;
@@ -20,64 +21,60 @@ std::vector<std::string> string_split(const std::string& s) {
 	}
 	return v;
 }
-int get_node_number(const std::string& s) {
+
+//This function takes a node name in the format: "N001" and returns the integer
+//number that the node refers to.
+//The function also takes a parameter n and checks if any of the nodes that are
+//parsed through the function have a higher node number and sets n to it if it
+//is higher.
+int get_node_number(const std::string& s,int &n) {
 	if (s.length() > 1) {
-		return std::stoi(s.substr(1,4));
+		int m = std::stoi(s.substr(1,4));
+		if (m > n) n = m;
+		return m;
 	} else {
 		return 0;
 	}
 }
 
-Component decode_line(std::string line) {
-	std::vector<std::string> v = string_split(line);
+//This function takes a file and returns a vector of Component pointers.
+std::vector<Component*> decode_file(std::ifstream &infile, int &n) {
+	std::vector<Component*> v1;
+	std::string tmp;
 
-	// Component comp;
-
-
-	switch(line[0]) {
-		case 'R': {
-			std::cout << "R" << get_node_number(v[1]) << get_node_number(v[2]) << std::endl;
-
-			Resistor r1(v[0], std::stod(v[3]), get_node_number(v[1]), get_node_number(v[2]));
-			return r1;
-			break;
+	//Here the function iterates over each line and makes a component if necessary
+	//with the data provided in the line.
+	while(std::getline(infile,tmp)){
+		std::vector<std::string> v2 = string_split(tmp);
+		switch(tmp[0]) {
+			case 'R': {
+				if (v2[1] != v2[2]) v1.push_back(new Resistor(v2[0], std::stod(v2[3]), get_node_number(v2[1],n), get_node_number(v2[2],n)));
+				break;
+			}
+			case 'I': {
+				if (v2[1] != v2[2]) v1.push_back(new CurrentSource(v2[0], std::stod(v2[3]), get_node_number(v2[1],n), get_node_number(v2[2],n)));
+				break;
+			}
 		}
-		case 'I': {
-			std::cout << "I" << std::endl;
+	}
 
-			Resistor r2(v[0], std::stod(v[3]), get_node_number(v[1]), get_node_number(v[2]));
-			return r2;
-
-			break;
-		}
-	}	
-
-	Resistor r3(v[0], std::stod(v[3]), get_node_number(v[1]), get_node_number(v[2]));
-	return r3;
-
+	return v1;
 }
 
 
 int main() {
 
-	// std::cout << "Test" << std::endl;
+	//Here the file is read.
+	std::ifstream infile;
+	infile.open("../testCircuit.cir"); 
+	if(!infile.is_open()){
+		return EXIT_FAILURE;
+	}
 
+	//Here the highest node number is initialised and parsed into decode_file.
+	//A vector of Component pointers is set to the output of decode_file
+	int highest_node = 0;
+	std::vector<Component*> components = decode_file(infile, highest_node);
+	infile.close();
 
-	// std::ifstream infile;
-	// infile.open("../testCircuit.cir");
-	// std::vector<Component> components;
- 
-	// if(!infile.is_open()){
-	// 	return EXIT_FAILURE;
-	// }
-
-	// std::string tmp;
-	// while(std::getline(infile,tmp)){
-	// 	components.push_back(decode_line(tmp));
-	// }
-
-	// infile.close();
-
-	Resistor r3("hi", 12, 1, 2);
-	r3.getConductance(1,2);
 }
