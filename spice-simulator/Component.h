@@ -1,24 +1,57 @@
 #pragma once
 
-#include "Node.h"
 #include <string>
+#include <vector>
 
-// Component Structure
-// Base structure for components to be inhertited from
-struct Component {
+// Component Class
+// Base class for component object, with basic constructor to set component name
+// and the virtual prototypes for two functions, getNodes and getConductance
+class Component {
+public:
+  Component(std::string p_name) : name{ p_name } {}
+
+  // getNodes Function
+  // Implemented by each derived class, returns a vector of the integer IDs of
+  // each node connected to the component
+  virtual std::vector<int> getNodes();
+
+  // getConductance Function
+  // Implemented by each derived class, returns the conductance between two
+  // nodes, so long as the component connects those nodes
+  virtual double getConductance(int p_node1, int p_node2);
+
+protected:
   std::string name;
 };
 
-struct CurrentSource : Component {
-  double current;
+// CurrentSource Class
+// Derived from Component, implements a DC current source
+class CurrentSource : public Component {
+public:
+  CurrentSource(std::string p_name, double p_current, int p_nodeIn, int p_nodeOut) : 
+    Component{ p_name }, current{ p_current }, 
+    nodeIn{ p_nodeIn }, nodeOut{ p_nodeOut } {}
 
-  Node* in;
-  Node* out;
+  std::vector<int> getNodes() override;
+  double getConductance(int p_node1, int p_node2) override;
+
+private:
+  double current;
+  int nodeIn, nodeOut;
 };
 
-struct Resistor : Component {
-  double resistance;
+// Resistor Class
+// Derived from Component, implements a resistor
+class Resistor : public Component{
+public:
+  Resistor(std::string p_name, double p_resistance, int p_node1, int p_node2) : 
+    Component{ p_name }, resistance{ p_resistance }, node1{ p_node1 },
+    node2{ p_node2 } {}
 
-  Node* node1;
-  Node* node2;
+  std::vector<int> getNodes() override;
+  double getConductance(int p_node1, int p_node2) override;
+
+private:
+  double resistance;
+  int node1, node2;
 };
