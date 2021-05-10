@@ -6,7 +6,7 @@ using namespace Eigen;
 // Updates the conductance matrix (passed by reference) with the effect of each
 // component as this function is called for it
 void updateConductanceMatrix(MatrixXcd& conductanceMatrix, Component* component) {
-	if (typeid(*component) == typeid(CurrentSource)) {
+	if (typeid(*component) == typeid(DCCurrentSource) || typeid(*component) == typeid(ACCurrentSource)) {
 		return;
 	} else {
 		std::vector<int> nodes = component->getNodes();
@@ -30,12 +30,14 @@ void updateConductanceMatrix(MatrixXcd& conductanceMatrix, Component* component)
 
 // updateCurrentVector Function
 // Helper function that updates the current vector (passed by reference), which is only
-// affected by sources and non-linear components
+// affected by AC sources
 void updateCurrentVector(VectorXcd& currentVector, Component* component) {
-	if (typeid(*component) == typeid(CurrentSource)) {
+	if (typeid(*component) == typeid(ACCurrentSource)) {
 		// Input at 0, Output at 1
 		std::vector<int> nodes = component->getNodes();
-		double current = (component->getProperties())[0];
+		double amplitude = (component->getProperties())[0];
+		double phase = (component->getProperties())[1];
+		std::complex<double> current = std::polar(amplitude, phase);
 
 		if (nodes[0] != 0) {
 			currentVector(nodes[0] - 1) -= current;

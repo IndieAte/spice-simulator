@@ -20,6 +20,6 @@ int main() {
 
 	for (int i = 0; i < highest_node; i++) {
 		std::cout << "Node " << i + 1 << ": ";
-		std::cout << real(solution(i)) << "V" << std::endl;
+		std::cout << solution(i) << std::endl;
 	}
 }
