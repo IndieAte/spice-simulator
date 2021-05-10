@@ -144,11 +144,13 @@
   <ItemGroup>
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="ConductanceMatrix.cpp" />
+    <ClCompile Include="ParseFile.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConductanceMatrix.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="ParseFile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
