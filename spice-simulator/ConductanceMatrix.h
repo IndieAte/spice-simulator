@@ -5,3 +5,4 @@
 #include "Component.h"
 
 Eigen::MatrixXcd getConductanceMatrix(std::vector<Component*> components, int numNodes);
+Eigen::VectorXcd getCurrentVector(std::vector<Component*> components, int numNodes);

@@ -13,5 +13,12 @@ int main() {
 	components.push_back(&r1);
 	components.push_back(&r2);
 
-	std::cout << getConductanceMatrix(components, 2) << std::endl;
+	Eigen::MatrixXcd conductanceMatrix = getConductanceMatrix(components, 2);
+	Eigen::VectorXcd currentVector = getCurrentVector(components, 2);
+
+	Eigen::VectorXcd voltageVector;
+
+	voltageVector = conductanceMatrix.colPivHouseholderQr().solve(currentVector);
+
+	std::cout << voltageVector << std::endl;
 }
