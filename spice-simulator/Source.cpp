@@ -8,6 +8,7 @@ int main() {
 	components.push_back(new CurrentSource("I1", 0.002, 2, 3));
 	components.push_back(new CurrentSource("I2", 0.001, 4, 2));
 
+
 	components.push_back(new Resistor("R1", 1000, 0, 1));
 	components.push_back(new Resistor("R2", 2000, 1, 2));
 	components.push_back(new Resistor("R3", 1000, 3, 0));
