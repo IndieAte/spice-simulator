@@ -1,7 +1,10 @@
 #include <iostream>
+#include "Component.h"
 
 int main() {
 
-	std::cout << "Test tanmaytest" << std::endl;
+	Resistor r("R1", 100, 0, 1);
+
+	std::cout << r.getConductance(0, 1) << std::endl;
 
 }
