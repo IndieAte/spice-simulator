@@ -107,6 +107,8 @@ void vectorHandleVoltageSource(VectorXcd& currentVector, Component* component) {
 	std::complex<double> voltage;
 	std::vector<double> properties = component->getProperties();
 
+	if (typeid(*component) == typeid(DCVoltageSource)) isDC = true;
+
 	if (!isDC) {
 		double amplitude = properties[0];
 		double phase = properties[1];
@@ -114,8 +116,6 @@ void vectorHandleVoltageSource(VectorXcd& currentVector, Component* component) {
 	} else {
 		voltage = properties[0];
 	}
-
-	if (typeid(*component) == typeid(DCVoltageSource)) isDC = true;
 
 	std::vector<int> nodes = component->getNodes();
 	int nodePlus = nodes[0];
@@ -138,8 +138,8 @@ void vectorHandleVoltageSource(VectorXcd& currentVector, Component* component) {
 void updateCurrentVector(VectorXcd& currentVector, Component* component, bool& isVoltageSource) {
 	if (typeid(*component) == typeid(ACCurrentSource)) {
 		vectorHandleACCurrentSource(currentVector, component);
-	} else if (typeid(*component) == typeid(DCCurrentSource) ||
-		typeid(*component) == typeid(ACCurrentSource)) {
+	} else if (typeid(*component) == typeid(DCVoltageSource) ||
+		typeid(*component) == typeid(ACVoltageSource)) {
 		
 		isVoltageSource = true;
 	}
