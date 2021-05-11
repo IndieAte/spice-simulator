@@ -2,6 +2,9 @@
 
 using namespace Eigen;
 
+// matrixHandleTwoTerminalComponent Function
+// Handler for updating the conductance matrix due to basic two terminal components, 
+// the conduction matrix is passed by reference
 void matrixHandleTwoTerminalComponent(MatrixXcd& conductanceMatrix, Component* component,
 	std::vector<int> nodes) {
 
@@ -19,6 +22,9 @@ void matrixHandleTwoTerminalComponent(MatrixXcd& conductanceMatrix, Component* c
 	}
 }
 
+// matrixHandleVoltageSource Function
+// Handler for updating the conductance matrix due to voltage source components,
+// the conduction matrix is passed by reference
 void matrixHandleVoltageSource(MatrixXcd& conductanceMatrix, Component* component) {
 	std::vector<int> nodes = component->getNodes();
 	int nodePlus = nodes[0];
@@ -86,6 +92,9 @@ MatrixXcd getConductanceMatrix(std::vector<Component*> components, int numNodes)
 	return conductanceMatrix;
 }
 
+// vectorHandleACCurrentSource Function
+// Handler for updating the current vector with the effects of AC current sources,
+// the current vector is passed by reference
 void vectorHandleACCurrentSource(VectorXcd& currentVector, Component* component) {
 	// Input at 0, Output at 1
 	std::vector<int> nodes = component->getNodes();
@@ -102,6 +111,9 @@ void vectorHandleACCurrentSource(VectorXcd& currentVector, Component* component)
 	}
 }
 
+// vectorHandleVoltageSource Function
+// Handler for updating the current vector with the effects of AC and DC voltage sources,
+// the current vector is passed by reference
 void vectorHandleVoltageSource(VectorXcd& currentVector, Component* component) {
 	bool isDC = false;
 	std::complex<double> voltage;
