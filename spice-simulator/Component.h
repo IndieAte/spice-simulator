@@ -1,5 +1,6 @@
 #pragma once
 
+#include <complex>
 #include <string>
 #include <vector>
 
@@ -20,20 +21,43 @@ public:
   // nodes, so long as the component connects those nodes
   virtual double getConductance(int p_node1, int p_node2);
 
+  // getProperties Function
+  // Implemented by each derived class, returns a vector of component properties
+  // to describe it's behaviour
+  virtual std::vector<double> getProperties();
+
 protected:
   std::string name;
 };
 
-// CurrentSource Class
-// Derived from Component, implements a DC current source
-class CurrentSource : public Component {
+// ACCurrentSource Class
+// Derived from Component, implements an AC current source
+class ACCurrentSource : public Component {
 public:
-  CurrentSource(std::string p_name, double p_current, int p_nodeIn, int p_nodeOut) : 
+  ACCurrentSource(std::string p_name, double p_amplitude, double p_phase,
+    int p_nodeIn, int p_nodeOut) : Component{ p_name }, nodeIn{ p_nodeIn },
+    nodeOut{ p_nodeOut }, amplitude{ p_amplitude }, phase{ p_phase } {}
+
+  std::vector<int> getNodes() override;
+  double getConductance(int p_node1, int p_node2) override;
+  std::vector<double> getProperties() override;
+
+private:
+  double amplitude, phase;
+  int nodeIn, nodeOut;
+};
+
+// DCCurrentSource Class
+// Derived from Component, implements a DC current source
+class DCCurrentSource : public Component {
+public:
+  DCCurrentSource(std::string p_name, double p_current, int p_nodeIn, int p_nodeOut) : 
     Component{ p_name }, current{ p_current }, 
     nodeIn{ p_nodeIn }, nodeOut{ p_nodeOut } {}
 
   std::vector<int> getNodes() override;
   double getConductance(int p_node1, int p_node2) override;
+  std::vector<double> getProperties() override;
 
 private:
   double current;
@@ -50,6 +74,7 @@ public:
 
   std::vector<int> getNodes() override;
   double getConductance(int p_node1, int p_node2) override;
+  std::vector<double> getProperties() override;
 
 private:
   double resistance;
