@@ -20,7 +20,7 @@ int main() {
 
 	std::vector<Eigen::Vector3d> results = runACAnalysis(outputNode, 100, 10000, 1000, components, highest_node);
 
-	std::ofstream outfile("output.csv");
+	std::ofstream outfile("../output.csv");
 
 	if (outfile.is_open()) {
 		outfile << "Frequency / Hz, Amplitude / dB, Phase / Degrees" << std::endl;
