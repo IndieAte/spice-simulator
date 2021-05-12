@@ -1,5 +1,7 @@
 #include "Component.h"
 
+using namespace std::complex_literals;
+
 // ==================== COMPONENT (BASE CLASS) ====================
 
 std::vector<int> Component::getNodes() {
@@ -8,7 +10,7 @@ std::vector<int> Component::getNodes() {
 	return nodes;
 }
 
-double Component::getConductance(int p_node1, int p_node2) {
+std::complex<double> Component::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
 	return 0;
 }
 
@@ -31,7 +33,7 @@ std::vector<int> ACCurrentSource::getNodes() {
 	return nodes;
 }
 
-double ACCurrentSource::getConductance(int p_node1, int p_node2) {
+std::complex<double> ACCurrentSource::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
 	return 0;
 }
 
@@ -57,7 +59,7 @@ std::vector<int> DCCurrentSource::getNodes() {
 	return nodes;
 }
 
-double DCCurrentSource::getConductance(int p_node1, int p_node2) {
+std::complex<double> DCCurrentSource::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
 	return 0;
 }
 
@@ -82,7 +84,7 @@ std::vector<int> ACVoltageSource::getNodes() {
 	return nodes;
 }
 
-double ACVoltageSource::getConductance(int node1, int node2) {
+std::complex<double> ACVoltageSource::getConductance(int node1, int node2, double p_angularFrequency) {
 	return 0;
 }
 
@@ -108,7 +110,7 @@ std::vector<int> DCVoltageSource::getNodes() {
 	return nodes;
 }
 
-double DCVoltageSource::getConductance(int node1, int node2) {
+std::complex<double> DCVoltageSource::getConductance(int node1, int node2, double p_angularFrequency) {
 	return 0;
 }
 
@@ -131,7 +133,7 @@ std::vector<int> Resistor::getNodes() {
 	return nodes;
 }
 
-double Resistor::getConductance(int p_node1, int p_node2) {
+std::complex<double> Resistor::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
 	if (p_node1 != node1 && p_node1 != node2
 		|| p_node2 != node1 && p_node2 != node2) {
 		
@@ -145,6 +147,64 @@ std::vector<double> Resistor::getProperties() {
 	std::vector<double> properties;
 
 	properties.push_back(resistance);
+
+	return properties;
+}
+
+// =========================== CAPACITOR ===========================
+
+std::vector<int> Capacitor::getNodes() {
+	std::vector<int> nodes;
+
+	nodes.push_back(node1);
+	nodes.push_back(node2);
+
+	return nodes;
+}
+
+std::complex<double> Capacitor::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
+	if (p_node1 != node1 && p_node1 != node2
+		|| p_node2 != node1 && p_node2 != node2) {
+		
+		return 0;
+	} else {
+		return capacitance * p_angularFrequency * 1i;
+	}
+}
+
+std::vector<double> Capacitor::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(capacitance);
+
+	return properties;
+}
+
+// =========================== INDUCTOR ===========================
+
+std::vector<int> Inductor::getNodes() {
+	std::vector<int> nodes;
+
+	nodes.push_back(node1);
+	nodes.push_back(node2);
+
+	return nodes;
+}
+
+std::complex<double> Inductor::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
+	if (p_node1 != node1 && p_node1 != node2
+		|| p_node2 != node1 && p_node2 != node2) {
+		
+		return 0;
+	} else {
+		return 1.0 / (inductance * p_angularFrequency * 1i);
+	}
+}
+
+std::vector<double> Inductor::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(inductance);
 
 	return properties;
 }

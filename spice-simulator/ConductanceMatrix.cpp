@@ -6,19 +6,19 @@ using namespace Eigen;
 // Handler for updating the conductance matrix due to basic two terminal components, 
 // the conduction matrix is passed by reference
 void matrixHandleTwoTerminalComponent(MatrixXcd& conductanceMatrix, Component* component,
-	std::vector<int> nodes) {
+	std::vector<int> nodes, double angFreq) {
 
 	if (nodes[0] != 0 && nodes[1 != 0]) {
-		conductanceMatrix(nodes[0] - 1, nodes[1] - 1) -= component->getConductance(nodes[0], nodes[1]);
-		conductanceMatrix(nodes[1] - 1, nodes[0] - 1) -= component->getConductance(nodes[1], nodes[0]);
+		conductanceMatrix(nodes[0] - 1, nodes[1] - 1) -= component->getConductance(nodes[0], nodes[1], angFreq);
+		conductanceMatrix(nodes[1] - 1, nodes[0] - 1) -= component->getConductance(nodes[1], nodes[0], angFreq);
 	}
 
 	if (nodes[0] != 0) {
-		conductanceMatrix(nodes[0] - 1, nodes[0] - 1) += component->getConductance(nodes[0], nodes[1]);
+		conductanceMatrix(nodes[0] - 1, nodes[0] - 1) += component->getConductance(nodes[0], nodes[1], angFreq);
 	}
 
 	if (nodes[1] != 0) {
-		conductanceMatrix(nodes[1] - 1, nodes[1] - 1) += component->getConductance(nodes[1], nodes[0]);
+		conductanceMatrix(nodes[1] - 1, nodes[1] - 1) += component->getConductance(nodes[1], nodes[0], angFreq);
 	}
 }
 
@@ -52,7 +52,7 @@ void matrixHandleVoltageSource(MatrixXcd& conductanceMatrix, Component* componen
 // Updates the conductance matrix (passed by reference) with the effect of each
 // component as this function is called for it
 void updateConductanceMatrix(MatrixXcd& conductanceMatrix, Component* component, 
-	bool& isVoltageSource) {
+	bool& isVoltageSource, double angFreq) {
 	if (typeid(*component) == typeid(DCCurrentSource) ||
 		typeid(*component) == typeid(ACCurrentSource)) {
 
@@ -66,7 +66,7 @@ void updateConductanceMatrix(MatrixXcd& conductanceMatrix, Component* component,
 		std::vector<int> nodes = component->getNodes();
 
 		if (nodes.size() == 2) {
-			matrixHandleTwoTerminalComponent(conductanceMatrix, component, nodes);
+			matrixHandleTwoTerminalComponent(conductanceMatrix, component, nodes, angFreq);
 		}
 	}
 }
@@ -74,14 +74,14 @@ void updateConductanceMatrix(MatrixXcd& conductanceMatrix, Component* component,
 // getConductanceMatrix Function
 // Returns a matrix of complex doubles representing the conductance matrix in the
 // nodal analysis equation
-MatrixXcd getConductanceMatrix(std::vector<Component*> components, int numNodes) {
+MatrixXcd getConductanceMatrix(std::vector<Component*> components, int numNodes, double angFreq) {
 	MatrixXcd conductanceMatrix = MatrixXcd::Zero(numNodes, numNodes);
 	bool isVoltageSource;
 	std::vector<int> voltageSources;
 
 	for (int i = 0; i < components.size(); i++) {
 		isVoltageSource = false;
-		updateConductanceMatrix(conductanceMatrix, components[i], isVoltageSource);
+		updateConductanceMatrix(conductanceMatrix, components[i], isVoltageSource, angFreq);
 		if (isVoltageSource) voltageSources.push_back(i);
 	}
 
@@ -181,8 +181,8 @@ VectorXcd getCurrentVector(std::vector<Component*> components, int numNodes) {
 // solveAtFrequency Function
 // Solves for the voltage vector given a vector of pointers to Components, the number
 // of nodes in the circuit and the frequency to solve for
-VectorXcd solveAtFrequency(std::vector<Component*> components, int numNodes, double frequency) {
-	MatrixXcd conductanceMatrix = getConductanceMatrix(components, numNodes);
+VectorXcd solveAtFrequency(std::vector<Component*> components, int numNodes, double angularFrequency) {
+	MatrixXcd conductanceMatrix = getConductanceMatrix(components, numNodes, angularFrequency);
 	VectorXcd currentVector = getCurrentVector(components, numNodes);
 
 	VectorXcd solution(numNodes);
