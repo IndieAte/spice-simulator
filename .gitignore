@@ -373,3 +373,5 @@ spice-simulator/*
 !spice-simulator/*.vcxproj.*
 
 libstdc++-6.dll
+
+output.csv
