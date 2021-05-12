@@ -89,6 +89,10 @@ double degrees_to_radians(double d) {
 	return (d * M_PI)/180;
 }
 
+double radians_to_degrees(double d) {
+	return (d * 180) / M_PI;
+}
+
 //This function takes a file and returns a vector of Component pointers.
 std::vector<Component*> decode_file(std::ifstream& infile, int& n) {
 	std::vector<Component*> v1;

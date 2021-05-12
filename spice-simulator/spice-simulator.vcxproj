@@ -142,12 +142,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ACAnalysis.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="ConductanceMatrix.cpp" />
     <ClCompile Include="ParseFile.cpp" />
-    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ACAnalysis.h" />
     <ClInclude Include="ConductanceMatrix.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="ParseFile.h" />
