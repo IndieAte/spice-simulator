@@ -11,7 +11,7 @@ int main() {
 
 	int highestNode = 2;
 
-	Eigen::MatrixXcd GMat = getConductanceMatrix(components, highestNode);
+	Eigen::MatrixXcd GMat = getConductanceMatrix(components, highestNode, 100);
 	Eigen::VectorXcd IVec = getCurrentVector(components, highestNode);
 
 	std::cout << "The conduction matrix is:" << std::endl;

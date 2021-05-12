@@ -19,7 +19,7 @@ public:
   // getConductance Function
   // Implemented by each derived class, returns the conductance between two
   // nodes, so long as the component connects those nodes
-  virtual double getConductance(int p_node1, int p_node2);
+  virtual std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency);
 
   // getProperties Function
   // Implemented by each derived class, returns a vector of component properties
@@ -39,7 +39,7 @@ public:
     nodeOut{ p_nodeOut }, amplitude{ p_amplitude }, phase{ p_phase } {}
 
   std::vector<int> getNodes() override;
-  double getConductance(int p_node1, int p_node2) override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
 
 private:
@@ -56,7 +56,7 @@ public:
     nodeIn{ p_nodeIn }, nodeOut{ p_nodeOut } {}
 
   std::vector<int> getNodes() override;
-  double getConductance(int p_node1, int p_node2) override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
 
 private:
@@ -73,7 +73,7 @@ public:
     nodePlus{ p_nodePlus }, nodeMinus{ p_nodeMinus } {}
 
   std::vector<int> getNodes() override;
-  double getConductance(int p_node1, int p_node2) override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
 
 private:
@@ -90,7 +90,7 @@ public:
     nodeMinus{ p_nodeMinus } {}
 
   std::vector<int> getNodes() override;
-  double getConductance(int p_node1, int p_node2) override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
 
 private:
@@ -107,10 +107,44 @@ public:
     node2{ p_node2 } {}
 
   std::vector<int> getNodes() override;
-  double getConductance(int p_node1, int p_node2) override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
 
 private:
   double resistance;
   int node1, node2;
+};
+
+// Capacitor Class
+// Derived from Component, implements a capacitor
+class Capacitor : public Component{
+public:
+  Capacitor(std::string p_name, double p_capacitance, int p_node1, int p_node2) :
+    Component{ p_name }, capacitance{ p_capacitance}, node1{ p_node1 },
+    node2{ p_node2 } {}
+
+  std::vector<int> getNodes() override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
+  std::vector<double> getProperties() override;
+
+  private:
+    double capacitance;
+    int node1, node2;
+};
+
+// Inductor Class
+// Derived from Component, implements a capacitor
+class Inductor : public Component{
+public:
+  Inductor(std::string p_name, double p_inductance, int p_node1, int p_node2) :
+    Component{ p_name }, inductance{ p_inductance}, node1{ p_node1 },
+    node2{ p_node2 } {}
+
+  std::vector<int> getNodes() override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
+  std::vector<double> getProperties() override;
+
+  private:
+    double inductance;
+    int node1, node2;
 };
