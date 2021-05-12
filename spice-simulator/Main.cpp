@@ -16,17 +16,26 @@ int main() {
 	std::vector<Component*> components = decode_file(infile, highest_node);
 	infile.close();
 
-	int outputNode = 1;
+	int outputNode = 2;
 
-	std::vector<Eigen::Vector3d> results = runACAnalysis(outputNode, 10, 1000, 10, components, highest_node);
+	std::vector<Eigen::Vector3d> results = runACAnalysis(outputNode, 100, 10000, 1000, components, highest_node);
 
-	for (int i = 0; i < results.size(); i++) {
-		double amplitude = results[i](0);
-		double phase = radians_to_degrees(results[i](1));
-		double frequency = results[i](2);
+	std::ofstream outfile("output.csv");
 
-		std::cout << "At " << frequency << "Hz:" << std::endl;
-		std::cout << amplitude << "V" << std::endl;
-		std::cout << phase << " degrees" << std::endl << std::endl;
+	if (outfile.is_open()) {
+		outfile << "Frequency / Hz, Amplitude / dB, Phase / Degrees" << std::endl;
+
+		for (int i = 0; i < results.size(); i++) {
+			double amplitude = 20 * log10(results[i](0));
+			double phase = radians_to_degrees(results[i](1));
+			double frequency = results[i](2);
+
+			outfile << frequency << ", ";
+			outfile << amplitude << ", ";
+			outfile << phase << ", " << std::endl;
+		}
+	} else {
+		std::cout << "Failed to open output.csv" << std::endl;
+		return EXIT_FAILURE;
 	}
 }
