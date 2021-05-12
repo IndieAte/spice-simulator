@@ -3,25 +3,22 @@
 #include "ParseFile.h"
 
 int main() {
-	std::vector<Component*> components;
+	std::ifstream infile;
+	infile.open("../testCircuit.cir"); 
+	if(!infile.is_open()){
+		return EXIT_FAILURE;
+	}
 
-	components.push_back(new ACVoltageSource("V1", 1, 0, 1, 0));
-	components.push_back(new Resistor("R1", 1000, 1, 2));
-	components.push_back(new Resistor("R2", 1000, 2, 0));
+	//Here the highest node number is initialised and parsed into decode_file.
+	//A vector of Component pointers is set to the output of decode_file
+	int highest_node = 0;
+	std::vector<Component*> components = decode_file(infile, highest_node);
+	infile.close();
 
-	int highestNode = 2;
+	Eigen::VectorXcd solution = solveAtFrequency(components, highest_node, 0);
 
-	Eigen::MatrixXcd GMat = getConductanceMatrix(components, highestNode);
-	Eigen::VectorXcd IVec = getCurrentVector(components, highestNode);
-
-	std::cout << "The conduction matrix is:" << std::endl;
-	std::cout << GMat << std::endl;
-
-	std::cout << "The current vector is:" << std::endl;
-	std::cout << IVec << std::endl;
-
-	Eigen::VectorXcd VVec = solveAtFrequency(components, highestNode, 100);
-
-	std::cout << "The voltage vector is:" << std::endl;
-	std::cout << VVec << std::endl;
+	for (int i = 0; i < highest_node; i++) {
+		std::cout << "Node " << i + 1 << ": ";
+		std::cout << solution(i) << std::endl;
+	}
 }
