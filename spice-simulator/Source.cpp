@@ -6,8 +6,8 @@ int main() {
 	std::vector<Component*> components;
 
 	components.push_back(new ACVoltageSource("V1", 1, 0, 1, 0));
-	components.push_back(new Resistor("R1", 1000, 1, 2));
-	components.push_back(new Resistor("R2", 1000, 2, 0));
+	components.push_back(new Capacitor("C1", 0.001, 1, 2));
+	components.push_back(new Resistor("R2", 1, 2, 0));
 
 	int highestNode = 2;
 

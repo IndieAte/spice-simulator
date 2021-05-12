@@ -1,5 +1,7 @@
 #include "Component.h"
 
+using namespace std::complex_literals;
+
 // ==================== COMPONENT (BASE CLASS) ====================
 
 std::vector<int> Component::getNodes() {
@@ -166,7 +168,7 @@ std::complex<double> Capacitor::getConductance(int p_node1, int p_node2, double 
 		
 		return 0;
 	} else {
-		return capacitance * p_angularFrequency * sqrt(-1);
+		return capacitance * p_angularFrequency * 1i;
 	}
 }
 
@@ -195,7 +197,7 @@ std::complex<double> Inductor::getConductance(int p_node1, int p_node2, double p
 		
 		return 0;
 	} else {
-		return 1.0 / (inductance * p_angularFrequency * sqrt(-1));
+		return 1.0 / (inductance * p_angularFrequency * 1i);
 	}
 }
 
