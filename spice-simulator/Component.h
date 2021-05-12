@@ -64,6 +64,40 @@ private:
   int nodeIn, nodeOut;
 };
 
+// ACVoltageSource Class
+// Derived from Component, implements an AC voltage source
+class ACVoltageSource : public Component {
+public:
+  ACVoltageSource(std::string p_name, double p_amplitude, double p_phase, int p_nodePlus,
+    int p_nodeMinus) : Component{ p_name }, amplitude{ p_amplitude }, phase{ p_phase },
+    nodePlus{ p_nodePlus }, nodeMinus{ p_nodeMinus } {}
+
+  std::vector<int> getNodes() override;
+  double getConductance(int p_node1, int p_node2) override;
+  std::vector<double> getProperties() override;
+
+private:
+  double amplitude, phase;
+  int nodePlus, nodeMinus;
+};
+
+// DCVoltageSource Class
+// Derived from Component, implements a DC voltage source
+class DCVoltageSource : public Component {
+public:
+  DCVoltageSource(std::string p_name, double p_voltage, int p_nodePlus, int p_nodeMinus) :
+    Component{ p_name }, voltage{ p_voltage }, nodePlus{ p_nodePlus },
+    nodeMinus{ p_nodeMinus } {}
+
+  std::vector<int> getNodes() override;
+  double getConductance(int p_node1, int p_node2) override;
+  std::vector<double> getProperties() override;
+
+private:
+  double voltage;
+  int nodePlus, nodeMinus;
+};
+
 // Resistor Class
 // Derived from Component, implements a resistor
 class Resistor : public Component{

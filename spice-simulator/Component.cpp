@@ -69,6 +69,57 @@ std::vector<double> DCCurrentSource::getProperties() {
 	return properties;
 }
 
+// ======================= AC VOLTAGE SOURCE ======================
+
+std::vector<int> ACVoltageSource::getNodes() {
+	std::vector<int> nodes;
+
+	// ACVoltageSource should return the positive node first, then
+	// the negative node
+	nodes.push_back(nodePlus);
+	nodes.push_back(nodeMinus);
+
+	return nodes;
+}
+
+double ACVoltageSource::getConductance(int node1, int node2) {
+	return 0;
+}
+
+std::vector<double> ACVoltageSource::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(amplitude);
+	properties.push_back(phase);
+
+	return properties;
+}
+
+// ======================= DC VOLTAGE SOURCE ======================
+
+std::vector<int> DCVoltageSource::getNodes() {
+	std::vector<int> nodes;
+
+	// DCVoltageSource should return the positive node first, then
+	// the negative node
+	nodes.push_back(nodePlus);
+	nodes.push_back(nodeMinus);
+
+	return nodes;
+}
+
+double DCVoltageSource::getConductance(int node1, int node2) {
+	return 0;
+}
+
+std::vector<double> DCVoltageSource::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(voltage);
+
+	return properties;
+}
+
 // =========================== RESISTOR ===========================
 
 std::vector<int> Resistor::getNodes() {
