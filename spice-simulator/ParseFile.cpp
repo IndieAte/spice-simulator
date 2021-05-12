@@ -99,21 +99,41 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n) {
 	while (std::getline(infile, tmp)) {
 		std::vector<std::string> v2 = string_split(tmp,' ');
 
-		switch (tmp[0]) {
-			case 'R': {
-				if (v2[1] != v2[2]) v1.push_back(new Resistor(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
-				break;
-			}
-			case 'I': {
-				if (v2[1] != v2[2] && v2[3][0] == 'A') {
-					std::vector<double> v3 = decode_ac(v2[3]);
-					v1.push_back(new ACCurrentSource(v2[0], v3[0], degrees_to_radians(v3[1]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
-				} else if (v2[1] != v2[2]) {
-					v1.push_back(new DCCurrentSource(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+		if (v2[1] != v2[2]) {
+			switch (toupper(tmp[0])) {
+				case 'R': {
+					v1.push_back(new Resistor(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+					break;
 				}
-				break;
+				case 'I': {
+					if (v2[3][0] == 'A') {
+						std::vector<double> v3 = decode_ac(v2[3]);
+						v1.push_back(new ACCurrentSource(v2[0], v3[0], degrees_to_radians(v3[1]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+					} else {
+						v1.push_back(new DCCurrentSource(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+					}
+					break;
+				}
+				case 'C': {
+					v1.push_back(new Capacitor(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+					break;
+				}
+				case 'L': {
+					v1.push_back(new Inductor(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+					break;
+				}
+				case 'V': {
+					if (v2[3][0] == 'A') {
+						std::vector<double> v3 = decode_ac(v2[3]);
+						v1.push_back(new ACVoltageSource(v2[0], v3[0], degrees_to_radians(v3[1]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+					} else {
+						v1.push_back(new DCVoltageSource(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
+					}
+					break;
+				}
 			}
 		}
+
 	}
 
 	return v1;
