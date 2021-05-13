@@ -94,7 +94,7 @@ double radians_to_degrees(double d) {
 }
 
 //This function takes a file and returns a vector of Component pointers.
-std::vector<Component*> decode_file(std::ifstream& infile, int& n) {
+std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& command) {
 	std::vector<Component*> v1;
 	std::string tmp;
 
@@ -133,6 +133,11 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n) {
 					v1.push_back(new DCVoltageSource(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
 				}
 				break;
+			}
+			case '.': {
+				if (v2[0] == ".ac") {
+					command = new ACCommand("AC", v2[1], decode_value(v2[2]), decode_value(v2[3]), decode_value(v2[4]));
+				}
 			}
 		}
 	}

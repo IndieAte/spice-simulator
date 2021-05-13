@@ -12,8 +12,8 @@ int main() {
 
 	//Here the highest node number is initialised and parsed into decode_file.
 	//A vector of Component pointers is set to the output of decode_file
-	int highest_node = 0;
-	std::vector<Component*> components = decode_file(infile, highest_node);
+	int highest_node = 0; Command* command;
+	std::vector<Component*> components = decode_file(infile, highest_node, command);
 	infile.close();
 
 	int outputNode = 2;
