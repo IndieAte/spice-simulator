@@ -165,3 +165,19 @@ public:
     double modelName;
     int nodeAnode, nodeCathode;
 };
+
+// BJT (both NPN and PNP) Class
+// Derived from Component, implements a NPN or PNP BJT [in revision]
+class BJT : public Component{
+public:
+  BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p_nodeBase, int p_nodeEmitter) :
+    Component{ p_name }, nodeCollector{ p_nodeCollector }, nodeBase{ p_nodeBase }, nodeEmitter{ p_nodeEmitter} {}
+
+  std::vector<int> getNodes() override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
+  std::vector<double> getProperties() override;
+
+  private:
+    double modelName;
+    int nodeCollector, nodeBase, nodeEmitter;
+};
