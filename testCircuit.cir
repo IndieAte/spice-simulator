@@ -1,9 +1,9 @@
 * Basic Test Circuit
 
-V1 N001 0 AC(2 45)
+I1 N001 0 AC(2 45)
 C1 N001 N002 1u
 L1 N002 0 1m
 R1 N002 0 1k
 
-.ac dec 10 10 1k
+.ac dec 20 10 1k
 .end

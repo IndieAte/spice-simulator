@@ -93,8 +93,20 @@ double radians_to_degrees(double d) {
 	return (d * 180) / M_PI;
 }
 
+double decode_sweep(std::string sweep) {
+	if (sweep == "dec") {
+		return 10;
+	} else if (sweep == "oct") {
+		return 8;
+	} else if (sweep == "lin") {
+		return 1;
+	} else {
+		throw std::invalid_argument("Invalid Sweep");
+	}
+}
+
 //This function takes a file and returns a vector of Component pointers.
-std::vector<Component*> decode_file(std::ifstream& infile, int& n) {
+std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& command) {
 	std::vector<Component*> v1;
 	std::string tmp;
 
@@ -133,6 +145,11 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n) {
 					v1.push_back(new DCVoltageSource(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
 				}
 				break;
+			}
+			case '.': {
+				if (v2[0] == ".ac") {
+					command = new ACCommand("AC", decode_sweep(v2[1]), decode_value(v2[2]), decode_value(v2[3]), decode_value(v2[4]));
+				}
 			}
 		}
 	}
