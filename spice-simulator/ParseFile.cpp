@@ -149,7 +149,6 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 			case '.': {
 				if (v2[0] == ".ac") {
 					command = new ACCommand("AC", decode_sweep(v2[1]), decode_value(v2[2]), decode_value(v2[3]), decode_value(v2[4]));
-					std::cout << command->getValues()[0] << std::endl;
 				}
 			}
 		}

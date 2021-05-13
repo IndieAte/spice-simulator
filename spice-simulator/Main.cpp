@@ -36,7 +36,11 @@ int main(int argc, char** argv) {
 	std::vector<Component*> components = decode_file(infile, highest_node, command);
 	infile.close();
 
-	std::vector<Eigen::Vector3d> results = runACAnalysis(outputNode, 100, 10000, 1000, components, highest_node);
+	std::vector<Eigen::Vector3d> results;
+	std::vector<double> command_values = command->getValues();
+	if (command->type == "AC") {
+		results = runACAnalysis(outputNode, command_values[2], command_values[3], command_values[1], components, highest_node);
+	}
 
 	std::ofstream outfile(outfilePath);
 
