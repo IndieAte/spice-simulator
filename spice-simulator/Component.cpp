@@ -206,3 +206,32 @@ std::vector<double> Inductor::getProperties() {
 
 	return properties;
 }
+
+// =========================== DIODE ==============================
+
+std::vector<int> Diode::getNodes() {
+	std::vector<int> nodes;
+
+	nodes.push_back(nodeAnode);
+	nodes.push_back(nodeCathode);
+
+	return nodes;
+}
+
+std::complex<double> Diode::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
+	if (p_node1 != nodeAnode && p_node1 != nodeCathode
+		|| p_node2 != nodeAnode && p_node2 != nodeCathode) {
+		
+		return 0;
+	} else {
+		return 0; // NEED CONDUCTANCE HERE
+	}
+}
+
+std::vector<double> Diode::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(modelName);
+
+	return properties;
+}

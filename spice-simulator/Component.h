@@ -148,3 +148,20 @@ public:
     double inductance;
     int node1, node2;
 };
+
+// Diode Class
+// Derived from Component, implements a diode [in revision]
+class Diode : public Component{
+public:
+  Diode(std::string p_name, std::string p_modelName, int p_nodeAnode, int p_nodeCathode) :
+    Component{ p_name }, nodeAnode{ p_nodeAnode },
+    nodeCathode{ p_nodeCathode } {}
+
+  std::vector<int> getNodes() override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
+  std::vector<double> getProperties() override;
+
+  private:
+    double modelName;
+    int nodeAnode, nodeCathode;
+};
