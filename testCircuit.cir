@@ -5,5 +5,5 @@ C1 N001 N002 1u
 L1 N002 0 1m
 R1 N002 0 1k
 
-.ac dec 10 10 1k
+.ac list 10 10 1k
 .end
