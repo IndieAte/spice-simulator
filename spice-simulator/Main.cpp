@@ -3,9 +3,27 @@
 #include "ParseFile.h"
 #include "ACAnalysis.h"
 
-int main() {
+int main(int argc, char** argv) {
 	std::ifstream infile;
-	infile.open("../testCircuit.cir"); 
+	std::string outfilePath;
+	int outputNode;
+
+	if (argc == 1) {
+		std::cout << "Error: No input file provided" << std::endl;
+		return EXIT_FAILURE;
+	} else if (argc == 2) {
+		std::cout << "Error: No output node designated" << std::endl;
+		return EXIT_FAILURE;
+	} else if (argc == 3) {
+		infile.open(argv[1]);
+		outputNode = std::stoi(argv[2]);
+		outfilePath = "output.csv";
+	} else if (argc == 4) {
+		infile.open(argv[1]);
+		outputNode = std::stoi(argv[2]);
+		outfilePath = argv[3];
+	}
+
 	if(!infile.is_open()){
 		return EXIT_FAILURE;
 	}
@@ -16,11 +34,9 @@ int main() {
 	std::vector<Component*> components = decode_file(infile, highest_node);
 	infile.close();
 
-	int outputNode = 2;
-
 	std::vector<Eigen::Vector3d> results = runACAnalysis(outputNode, 100, 10000, 1000, components, highest_node);
 
-	std::ofstream outfile("../output.csv");
+	std::ofstream outfile(outfilePath);
 
 	if (outfile.is_open()) {
 		outfile << "Frequency / Hz, Amplitude / dB, Phase / Degrees" << std::endl;
