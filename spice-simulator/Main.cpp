@@ -10,7 +10,9 @@ int main(int argc, char** argv) {
 
 	if (argc == 1) {
 		std::cout << "Error: No input file provided" << std::endl;
-		return EXIT_FAILURE;
+		infile.open("../testCircuit.cir");
+		outfilePath = "../output.csv";
+		outputNode = 1;
 	} else if (argc == 2) {
 		std::cout << "Error: No output node designated" << std::endl;
 		return EXIT_FAILURE;
