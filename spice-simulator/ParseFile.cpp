@@ -38,19 +38,23 @@ bool is_number(std::string s, bool double_check) {
 //parsed through the function have a higher node number and sets n to it if it
 //is higher.
 int get_node_number(const std::string& s, int& n) {
-	if (s.length() > 1) {
-		std::string node_number = s.substr(1, 3);
-		if (is_number(node_number,false)) {
-			int m = std::stoi(node_number);
-			if (m > n) n = m;
-			return m;
+	try {
+		if (s.length() > 1) {
+			std::string node_number = s.substr(1, 3);
+			if (is_number(node_number, false)) {
+				int m = std::stoi(node_number);
+				if (m > n) n = m;
+				return m;
+			} else {
+				throw std::invalid_argument("Invalid Node: " + s);
+			}
+		} else if (s == "0") {
+			return 0;
 		} else {
 			throw std::invalid_argument("Invalid Node: " + s);
 		}
-	} else if (s == "0") {
-		return 0;
-	} else {
-		throw std::invalid_argument("Invalid Node: " + s);
+	} catch (std::invalid_argument& e) {
+		std::cerr << e.what() << std::endl;
 	}
 }
 
@@ -65,29 +69,33 @@ double decode_value(std::string s) {
 	}
 
 	std::string front = s.substr(0,counter+1);
-	if (is_number(front,true)) {
-		double d = std::stod(front);
-		if (end == "p") {
-			return d * 0.000000000001;
-		} else if (end == "n") {
-			return d * 0.000000001;
-		} else if (end == "u") {
-			return d * 0.000001;
-		} else if (end == "m") {
-			return d * 0.001;
-		} else if (end == "k") {
-			return d * 1000;
-		} else if (end == "Meg") {
-			return d * 1000000;
-		} else if (end == "G") {
-			return d * 1000000000;
-		} else if (end == "") {
-			return d;
+	try {
+		if (is_number(front, true)) {
+			double d = std::stod(front);
+			if (end == "p") {
+				return d * 0.000000000001;
+			} else if (end == "n") {
+				return d * 0.000000001;
+			} else if (end == "u") {
+				return d * 0.000001;
+			} else if (end == "m") {
+				return d * 0.001;
+			} else if (end == "k") {
+				return d * 1000;
+			} else if (end == "Meg") {
+				return d * 1000000;
+			} else if (end == "G") {
+				return d * 1000000000;
+			} else if (end == "") {
+				return d;
+			} else {
+				throw std::invalid_argument("Invalid Multiplier: " + end);
+			}
 		} else {
-			throw std::invalid_argument("Invalid Multiplier: " + end);
+			throw std::invalid_argument("Invalid Value: " + s);
 		}
-	} else {
-		throw std::invalid_argument("Invalid Value: " + s);
+	} catch (std::invalid_argument& e) {
+		std::cerr << e.what() << std::endl;
 	}
 }
 
