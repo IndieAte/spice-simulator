@@ -93,7 +93,7 @@ double decode_value(std::string s) {
 
 //Get Amplitude and phase from AC String
 std::vector<double> decode_ac(std::string s) {
-	if (s.length() > 7) {
+	if (s.length() >= 7) {
 		s.erase(0,3);
 		s.erase(s.length()-1,1);
 		std::vector<std::string> v1 = string_split(s,' ');
