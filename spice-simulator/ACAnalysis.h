@@ -1,9 +1,11 @@
 #pragma once
 
-#include <iostream>
-#include <complex>
 #include <cmath>
+#include <complex>
+#include <iostream>
+
 #include "Eigen/Dense"
+
 #include "Component.h"
 
 std::vector<Eigen::Vector3d> runACAnalysis(int outputNode, double startFreq, double stopFreq, int pointsPerDecade,

@@ -31,14 +31,15 @@ int main(int argc, char** argv) {
 
 	//Here the highest node number is initialised and parsed into decode_file.
 	//A vector of Component pointers is set to the output of decode_file
-	int highest_node = 0; Command* command;
-	std::vector<Component*> components = decode_file(infile, highest_node, command);
+	int nNodes = 0; 
+	Command* command;
+	std::vector<Component*> components = decode_file(infile, nNodes, command);
 	infile.close();
 
 	std::vector<Eigen::Vector3d> results;
 	std::vector<double> command_values = command->getValues();
 	if (command->type == "AC") {
-		results = runACAnalysis(outputNode, command_values[2], command_values[3], command_values[1], components, highest_node);
+		results = runACAnalysis(outputNode, command_values[2], command_values[3], command_values[1], components, nNodes);
 	}
 
 	std::ofstream outfile(outfilePath);
