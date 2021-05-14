@@ -1,7 +1,6 @@
 #define _USE_MATH_DEFINES
 
 #include "ParseFile.h"
-#include <cmath>
 
 //This function returns a vector of a string that has been split at each of a chosen character.
 //The function also detects the character inside brackets and skips the character
