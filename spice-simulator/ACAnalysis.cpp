@@ -10,6 +10,7 @@ VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSInd
 	std::vector<int> vSIndexes, std::vector<int> nSIndexes, int nNodes, double angFreq);
 void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq);
 void currentSourceHandler(Component* comp, VectorXcd& iVec);
+void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec);
 
 /* Function runACAnalysis
 *		This function is responsible for running the AC analysis of the given circuit. It
@@ -143,6 +144,11 @@ VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSInd
 		currentSourceHandler(comps[j], iVec);
 	}
 
+	for (int i = 0; i < vSIndexes.size(); i++) {
+		int j = vSIndexes[i];
+		voltageSourceHandler(comps[j], gMat, iVec);
+	}
+
 	// Initialise the solution vector
 	VectorXcd soln;
 	// Solve for the nodal voltages using an Eigen solver
@@ -238,5 +244,88 @@ void currentSourceHandler(Component* comp, VectorXcd& iVec) {
 		} else {
 			iVec(nIn) -= current;
 		}
+	}
+}
+
+/* Function voltageSourceHandler
+*		This function updates the conduction matrix and the current vector
+*		with the effects of voltage sources
+* 
+*  Inputs:
+*		Component* comp - The voltage source component
+*		MatrixXcd& gMat - The conduction matrix as it currently is
+*		VectorXcd& iVec - The current vector as it currently is
+* 
+*  Outputs (By Reference):
+*		MatrixXcd& gMat	- The conduction matrix after having been updated
+*		VectorXcd& iVec - The current vector after having been updated
+*/
+void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
+	// Get the nodes connected to the source and name them as positive
+	// and negative for clarity
+	std::vector<int> nodes = comp->getNodes();
+	int nPos = nodes[0] - 1;
+	int nNeg = nodes[1] - 1;
+
+	// Check if the voltage source is short circuited and if it is, throw an
+	// error as the node it's connected to will be undefined
+	try {
+		if (nPos == nNeg) throw std::invalid_argument("Voltage source shorted");
+	} catch (std::invalid_argument& e) {
+		std::cerr << e.what() << std::endl;
+	}
+
+	// Set the voltage to 0 by default, meaning no work has to be done for
+	// DC sources
+	std::complex<double> voltage = 0;
+
+	// If we've got an AC source we need to find the voltage from it's amplitude 
+	// and phase
+	if (typeid(*comp) == typeid(ACVoltageSource)) {
+		std::vector<double> ppts = comp->getProperties();
+		double ampl = ppts[0];
+		double phase = ppts[1];
+		voltage = std::polar(ampl, phase);
+	}
+
+	// Handle the update appropriately depending on if either node is ground
+	if (nPos != -1 && nNeg != -1) {
+		// If the voltage source is floating, we need to add a new unknown, the current
+		// through it, which means adding an extra colum to the conduction matrix. We
+		// also need to add an extra equation to the conduction matrix representing the
+		// voltage between nodes
+
+		// Add an extra row and column to the conduction matrix
+		int cols = gMat.cols() + 1;
+		int rows = gMat.rows() + 1;
+		gMat.conservativeResize(rows, cols);
+		// Add an extra row to the current vector
+		iVec.conservativeResize(rows);
+
+		// Set the new rows to 0
+		rows--;
+		cols--;
+		gMat.row(rows).setZero();
+		gMat.col(cols).setZero();
+
+		// Fill the new row of the conduction matrix with the voltage equation
+		gMat(rows, nPos) = 1;
+		gMat(rows, nNeg) = -1;
+		// Attach the unknown current to the correct nodes
+		gMat(nPos, cols) = -1;
+		gMat(nNeg, cols) = 1;
+		// Add the other side of the voltage equation to the current vector
+		iVec(rows) = voltage;
+
+	} else if (nNeg == -1) {
+		// If the negative node is ground, the positive node is set to the voltage
+		gMat.row(nPos).setZero();
+		gMat(nPos, nPos) = 1;
+		iVec(nPos) = voltage;
+	} else {
+		// If the positive node is ground, the negative node is set to negative the voltage
+		gMat.row(nNeg).setZero();
+		gMat(nNeg, nNeg) = -1;
+		iVec(nNeg) = voltage;
 	}
 }
