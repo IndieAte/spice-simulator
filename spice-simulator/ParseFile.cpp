@@ -140,8 +140,8 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 	//with the data provided in the line.
 	while (std::getline(infile, tmp)) {
 		std::vector<std::string> v2 = string_split(tmp,' ');
-
-		switch (toupper(tmp[0])) {
+		try {
+			switch (toupper(tmp[0])) {
 			case 'R': {
 				if (v2[1] != v2[2] && v2.size() == 4) {
 					v1.push_back(new Resistor(v2[0], decode_value(v2[3]), get_node_number(v2[1], n), get_node_number(v2[2], n)));
@@ -213,6 +213,9 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 					}
 				}
 			}
+			}
+		} catch (std::invalid_argument& e) {
+			std::cerr << e.what() << std::endl;
 		}
 	}
 	return v1;
