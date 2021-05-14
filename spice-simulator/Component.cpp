@@ -250,7 +250,7 @@ std::vector<int> BJT::getNodes() {
 	return nodes;
 }
 
-std::complex<double> Diode::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
+std::complex<double> BJT::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
 	if (!((std::count(getNodes().begin(), getNodes().end(), p_node1) || 
 	std::count(getNodes().begin(), getNodes().end(), p_node2)))) {
 		return 0;
@@ -259,7 +259,7 @@ std::complex<double> Diode::getConductance(int p_node1, int p_node2, double p_an
 	}
 }
 
-std::vector<double> Diode::getProperties() {
+std::vector<double> BJT::getProperties() {
 	std::vector<double> properties;
 
 	properties.push_back(modelName);
