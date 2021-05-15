@@ -2,7 +2,15 @@
 
 using namespace Eigen;
 
-VectorXcd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
+VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std::vector<int> vSIndexes,
+	std::vector<int> lCIndexes, std::vector<int> nlCIndexes, int nNodes);
+void linearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
+void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
+void DCcurrentSourceHandler(Component* comp, VectorXd& iVec);
+void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
+void updateNonlinearComponent(Component* comp, VectorXd vVec);
+
+VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	std::vector<int> cSIndexes, vSIndexes, lCIndexes, nlCIndexes;
 
 	for (int i = 0; i < comps.size(); i++) {
@@ -20,15 +28,31 @@ VectorXcd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 		}
 	}
 
-	VectorXcd prevSoln, currSoln;
+	VectorXd prevSoln, currSoln;
+
+	prevSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
+	currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
+
+	int n = 0;
+
+	while (!currSoln.isApprox(prevSoln) && n < 40) {
+		n++;
+		prevSoln = currSoln;
+		currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
+	}
+
+	if (n == 40) {
+		std::cerr << "DC operating point iteration limit exceeded" << std::endl;
+	}
+
 	return currSoln;
 }
 
-VectorXcd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std::vector<int> vSIndexes,
+VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std::vector<int> vSIndexes,
 	std::vector<int> lCIndexes, std::vector<int> nlCIndexes, int nNodes) {
 	
-	MatrixXcd gMat = MatrixXcd::Zero(nNodes, nNodes);
-	VectorXcd iVec = VectorXcd::Zero(nNodes);
+	MatrixXd gMat = MatrixXd::Zero(nNodes, nNodes);
+	VectorXd iVec = VectorXd::Zero(nNodes);
 
 	for (int i = 0; i < lCIndexes.size(); i++) {
 		int j = lCIndexes[i];
@@ -42,15 +66,15 @@ VectorXcd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std
 
 	for (int i = 0; i < cSIndexes.size(); i++) {
 		int j = cSIndexes[i];
-		currentSourceHandler(comps[j], iVec);
+		DCcurrentSourceHandler(comps[j], iVec);
 	}
 
 	for (int i = 0; i < vSIndexes.size(); i++) {
 		int j = vSIndexes[i];
-		voltageSourceHandler(comps[j], gMat, iVec);
+		DCvoltageSourceHandler(comps[j], gMat, iVec);
 	}
 
-	VectorXcd vVec = gMat.colPivHouseholderQr().solve(iVec);
+	VectorXd vVec = gMat.colPivHouseholderQr().solve(iVec);
 
 	for (int i = 0; i < nlCIndexes.size(); i++) {
 		int j = nlCIndexes[i];
@@ -60,7 +84,7 @@ VectorXcd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std
 	return vVec;
 }
 
-void linearComponentHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
+void linearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 	std::vector<int> nodes = comp->getNodes();
 
 	int n0 = nodes[0];
@@ -72,7 +96,7 @@ void linearComponentHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
 		int n0i = n0 - 1;
 		int n1i = n1 - 1;
 
-		std::complex<double> g = comp->getConductance(n0, n1, 0);
+		 double g = std::real(comp->getConductance(n0, n1, 0));
 
 		if (n0 != 0 && n1 != 0) {
 			gMat(n0i, n1i) -= g;
@@ -84,11 +108,11 @@ void linearComponentHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
 	}
 }
 
-void nonlinearComponentHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
+void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 
 }
 
-void currentSourceHandler(Component* comp, VectorXcd& iVec) {
+void DCcurrentSourceHandler(Component* comp, VectorXd& iVec) {
 	if (typeid(*comp) == typeid(DCCurrentSource)) {
 		std::vector<int> nodes = comp->getNodes();
 		int nIn = nodes[0] - 1;
@@ -110,7 +134,7 @@ void currentSourceHandler(Component* comp, VectorXcd& iVec) {
 	}
 }
 
-void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
+void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 	std::vector<int> nodes = comp->getNodes();
 	int nPos = nodes[0] - 1;
 	int nNeg = nodes[1] - 1;
@@ -121,7 +145,7 @@ void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
 		std::cerr << e.what() << std::endl;
 	}
 
-	std::complex<double> voltage = 0;
+	double voltage = 0;
 
 	if (typeid(*comp) == typeid(DCVoltageSource)) {
 		std::vector<double> ppts = comp->getProperties();
@@ -159,6 +183,6 @@ void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
 	}
 }
 
-void updateNonlinearComponent(Component* comp, VectorXcd vVec) {
+void updateNonlinearComponent(Component* comp, VectorXd vVec) {
 	
 }

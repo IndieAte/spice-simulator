@@ -5,4 +5,4 @@
 #include "Component.h"
 #include "Eigen/Dense"
 
-Eigen::VectorXcd runDCOpPoint(std::vector<Component*> comps, int nNodes);
+Eigen::VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes);

@@ -1,6 +1,6 @@
 * Basic Test Circuit
 
-V1 N001 N002 AC(2 0)
+V1 N001 N002 2
 R1 N001 0 100
 R2 N002 0 200
 
