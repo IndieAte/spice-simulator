@@ -56,6 +56,8 @@ VectorXcd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std
 		int j = nlCIndexes[i];
 		updateNonlinearComponent(comps[j], vVec);
 	}
+
+	return vVec;
 }
 
 void linearComponentHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
@@ -109,7 +111,52 @@ void currentSourceHandler(Component* comp, VectorXcd& iVec) {
 }
 
 void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
+	std::vector<int> nodes = comp->getNodes();
+	int nPos = nodes[0] - 1;
+	int nNeg = nodes[1] - 1;
 
+	try {
+		if (nPos == nNeg) throw std::invalid_argument("Voltage source shorted");
+	} catch (std::invalid_argument& e) {
+		std::cerr << e.what() << std::endl;
+	}
+
+	std::complex<double> voltage = 0;
+
+	if (typeid(*comp) == typeid(DCVoltageSource)) {
+		std::vector<double> ppts = comp->getProperties();
+		voltage = ppts[0];
+	}
+
+	if (nPos != -1 && nNeg != -1) {
+		int cols = gMat.cols() + 1;
+		int rows = gMat.rows() + 1;
+		gMat.conservativeResize(rows, cols);
+
+		iVec.conservativeResize(rows);
+
+		rows--;
+		cols--;
+		gMat.row(rows).setZero();
+		gMat.col(cols).setZero();
+
+		gMat(rows, nPos) = 1;
+		gMat(rows, nNeg) = -1;
+
+		gMat(nPos, cols) = -1;
+		gMat(nNeg, cols) = 1;
+
+		iVec(rows) = voltage;
+
+	} else if (nNeg == -1) {
+		gMat.row(nPos).setZero();
+		gMat(nPos, nPos) = 1;
+		iVec(nPos) = voltage;
+	} else {
+		gMat.row(nNeg).setZero();
+		gMat(nNeg, nNeg) = -1;
+		iVec(nNeg) = voltage;
+	}
 }
 
 void updateNonlinearComponent(Component* comp, VectorXcd vVec) {
