@@ -108,6 +108,20 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 	return output;
 }
 
+void convertToSmallSignal(std::vector<Component*>& comps) {
+	std::vector<int> nlcIndexes;
+
+	for (int i = 0; i < comps.size(); i++) {
+		Component* c = comps[i];
+
+		if (typeid(*c) == typeid(Diode)) nlcIndexes.push_back(i);
+	}
+
+	if (nlcIndexes.size() == 0) {
+		return;
+	}
+}
+
 /* Function solveAtFrequency
 *		This function solves the node voltages of the circuit at the given angular frequency
 *		and returns them in rectangular form
@@ -144,6 +158,8 @@ VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSInd
 		currentSourceHandler(comps[j], iVec);
 	}
 
+	// Update the conductance matrix and current vector with the effects of
+	// voltage sources
 	for (int i = 0; i < vSIndexes.size(); i++) {
 		int j = vSIndexes[i];
 		voltageSourceHandler(comps[j], gMat, iVec);
