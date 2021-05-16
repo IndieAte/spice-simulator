@@ -26,6 +26,12 @@ public:
   // to describe it's behaviour
   virtual std::vector<double> getProperties();
 
+  // setProperties Function
+  // Implemented by each derived class, allows internal values to be modified,
+  // intended for use in changing companion model values in DC operating point
+  // analysis
+  virtual void setProperties(std::vector<double> properties);
+
 protected:
   std::string name;
 };
@@ -41,6 +47,7 @@ public:
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
 private:
   double amplitude, phase;
@@ -58,6 +65,7 @@ public:
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
 private:
   double current;
@@ -75,6 +83,7 @@ public:
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
 private:
   double amplitude, phase;
@@ -92,6 +101,7 @@ public:
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
 private:
   double voltage;
@@ -109,6 +119,7 @@ public:
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
 private:
   double resistance;
@@ -126,6 +137,7 @@ public:
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
   private:
     double capacitance;
@@ -143,6 +155,7 @@ public:
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
   private:
     double inductance;
@@ -153,16 +166,19 @@ public:
 // Derived from Component, implements a diode [in revision]
 class Diode : public Component{
 public:
-  Diode(std::string p_name, std::string p_modelName, int p_nodeAnode, int p_nodeCathode) :
-    Component{ p_name }, nodeAnode{ p_nodeAnode },
-    nodeCathode{ p_nodeCathode } {}
+  Diode(std::string p_name, std::string p_modelName, int p_nodeAnode, int p_nodeCathode);
 
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
   private:
-    double modelName;
+    // Is - Reverse bias saturation current
+    // Vd - Voltage across the diode (Vanode - Vcathode)
+    // Gd - Conductance of companion model at current Vd
+    // Id - Current of companion model at current Vd
+    double Is, Vd, Gd, Id;
     int nodeAnode, nodeCathode;
 };
 
@@ -176,6 +192,7 @@ public:
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
   std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
 
   private:
     double modelName;

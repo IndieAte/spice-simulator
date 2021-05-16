@@ -109,7 +109,36 @@ void linearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 }
 
 void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
+	std::vector<int> nodes = comp->getNodes();
 
+	if (typeid(*comp) == typeid(Diode)) {
+		int nAnode = nodes[0];
+		int nCathode = nodes[1];
+
+		if (nAnode == nCathode) return;
+
+		int nAi = nAnode - 1;
+		int nCi = nCathode - 1;
+
+		double g = std::real(comp->getConductance(nAnode, nCathode, 0));
+		std::vector<double> ppts = comp->getProperties();
+		double I = ppts[0];
+		
+		if (nAi != -1 && nCi != -1) {
+			gMat(nAi, nCi) -= g;
+			gMat(nCi, nAi) -= g;
+		}
+
+		if (nAi != -1) { 
+			gMat(nAi, nAi) += g; 
+			iVec(nAi) -= I;
+		}
+
+		if (nCi != -1) { 
+			gMat(nCi, nCi) += g;
+			iVec(nCi) += I;
+		}
+	}
 }
 
 void DCcurrentSourceHandler(Component* comp, VectorXd& iVec) {
@@ -184,5 +213,16 @@ void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 }
 
 void updateNonlinearComponent(Component* comp, VectorXd vVec) {
-	
+	std::vector<int> nodes = comp->getNodes();
+
+	if (typeid(*comp) == typeid(Diode)) {
+		int nAi = nodes[0] - 1;
+		int nCi = nodes[1] - 1;
+
+		double Vd = vVec(nAi) - vVec(nCi);
+		std::vector<double> ppts;
+		ppts.push_back(Vd);
+
+		comp->setProperties(ppts);
+	}
 }

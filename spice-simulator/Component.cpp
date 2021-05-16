@@ -1,5 +1,7 @@
 #include "Component.h"
 
+#define _VT 0.025851997
+
 using namespace std::complex_literals;
 
 // ==================== COMPONENT (BASE CLASS) ====================
@@ -18,6 +20,10 @@ std::vector<double> Component::getProperties() {
 	std::vector<double> properties;
 
 	return properties;
+}
+
+void Component::setProperties(std::vector<double> properties) {
+
 }
 
 // ======================= AC CURRENT SOURCE ======================
@@ -46,6 +52,10 @@ std::vector<double> ACCurrentSource::getProperties() {
 	return properties;
 }
 
+void ACCurrentSource::setProperties(std::vector<double> properties) {
+
+}
+
 // ======================= DC CURRENT SOURCE ======================
 
 std::vector<int> DCCurrentSource::getNodes() {
@@ -69,6 +79,10 @@ std::vector<double> DCCurrentSource::getProperties() {
 	properties.push_back(current);
 
 	return properties;
+}
+
+void DCCurrentSource::setProperties(std::vector<double> properties) {
+
 }
 
 // ======================= AC VOLTAGE SOURCE ======================
@@ -97,6 +111,10 @@ std::vector<double> ACVoltageSource::getProperties() {
 	return properties;
 }
 
+void ACVoltageSource::setProperties(std::vector<double> properties) {
+
+}
+
 // ======================= DC VOLTAGE SOURCE ======================
 
 std::vector<int> DCVoltageSource::getNodes() {
@@ -120,6 +138,10 @@ std::vector<double> DCVoltageSource::getProperties() {
 	properties.push_back(voltage);
 
 	return properties;
+}
+
+void DCVoltageSource::setProperties(std::vector<double> properties) {
+
 }
 
 // =========================== RESISTOR ===========================
@@ -151,6 +173,10 @@ std::vector<double> Resistor::getProperties() {
 	return properties;
 }
 
+void Resistor::setProperties(std::vector<double> properties) {
+
+}
+
 // =========================== CAPACITOR ===========================
 
 std::vector<int> Capacitor::getNodes() {
@@ -178,6 +204,10 @@ std::vector<double> Capacitor::getProperties() {
 	properties.push_back(capacitance);
 
 	return properties;
+}
+
+void Capacitor::setProperties(std::vector<double> properties) {
+
 }
 
 // =========================== INDUCTOR ===========================
@@ -209,11 +239,28 @@ std::vector<double> Inductor::getProperties() {
 	return properties;
 }
 
+void Inductor::setProperties(std::vector<double> properties) {
+
+}
+
 // =========================== DIODE ==============================
+
+Diode::Diode(std::string p_name, std::string p_modelName, int p_nodeAnode, int p_nodeCathode) : 
+	Component{ p_name }, nodeAnode{ p_nodeAnode }, nodeCathode{ p_nodeCathode } {
+	
+	Vd = 0.7;
+
+	if (p_modelName == "D") Is = pow(10, -12);
+	else Is = pow(10, -12);
+
+	Gd = (Is / _VT) * exp(Vd / _VT);
+	Id = (Is * (exp(Vd / _VT) - 1)) - (Gd * Vd);
+}
 
 std::vector<int> Diode::getNodes() {
 	std::vector<int> nodes;
 
+	// Diode should return the anode first, then the cathode
 	nodes.push_back(nodeAnode);
 	nodes.push_back(nodeCathode);
 
@@ -226,16 +273,25 @@ std::complex<double> Diode::getConductance(int p_node1, int p_node2, double p_an
 		
 		return 0;
 	} else {
-		return 0; // NEED CONDUCTANCE HERE
+		return Gd;
 	}
 }
 
 std::vector<double> Diode::getProperties() {
 	std::vector<double> properties;
 
-	properties.push_back(modelName);
+	properties.push_back(Id);
 
 	return properties;
+}
+
+void Diode::setProperties(std::vector<double> properties) {
+	// For diode, the set properties vector should have Vd 
+	// at index 0
+	Vd = properties[0];
+
+	Gd = (Is / _VT) * exp(Vd / _VT);
+	Id = (Is * (exp(Vd / _VT) - 1)) - (Gd * Vd);
 }
 
 // =========================== BJT ================================
@@ -265,4 +321,8 @@ std::vector<double> BJT::getProperties() {
 	properties.push_back(modelName);
 
 	return properties;
+}
+
+void BJT::setProperties(std::vector<double> properties) {
+
 }
