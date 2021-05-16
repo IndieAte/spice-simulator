@@ -12,20 +12,31 @@ void updateNonlinearComponent(Component* comp, VectorXd vVec);
 
 VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	std::vector<int> cSIndexes, vSIndexes, lCIndexes, nlCIndexes;
+	std::vector<int> vSTmp;
 
 	for (int i = 0; i < comps.size(); i++) {
 		Component* c = comps[i];
 
 		if (typeid(*c) == typeid(ACCurrentSource) || typeid(*c) == typeid(DCCurrentSource)) {
 			cSIndexes.push_back(i);
-		} else if (typeid(*c) == typeid(ACVoltageSource) || typeid(*c) == typeid(DCVoltageSource) ||
-			typeid(*c) == typeid(Inductor)) {
+		} else if (typeid(*c) == typeid(DCVoltageSource)) {
+			std::vector<double> ppts = c->getProperties();
+			if (ppts[0] != 0) {
+				vSTmp.push_back(i);
+			} else {
+				vSIndexes.push_back(i);
+			}
+		} else if (typeid(*c) == typeid(Inductor) || typeid(*c) == typeid(ACVoltageSource)) {
 			vSIndexes.push_back(i);
 		} else if (typeid(*c) == typeid(Diode)) {
 			nlCIndexes.push_back(i);
 		} else {
 			lCIndexes.push_back(i);
 		}
+	}
+
+	for (int i = 0; i < vSTmp.size(); i++) {
+		vSIndexes.push_back(vSTmp[i]);
 	}
 
 	VectorXd prevSoln, currSoln;
@@ -200,7 +211,6 @@ void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 		gMat(nNeg, cols) = 1;
 
 		iVec(rows) = voltage;
-
 	} else if (nNeg == -1) {
 		gMat.row(nPos).setZero();
 		gMat(nPos, nPos) = 1;
@@ -219,7 +229,14 @@ void updateNonlinearComponent(Component* comp, VectorXd vVec) {
 		int nAi = nodes[0] - 1;
 		int nCi = nodes[1] - 1;
 
-		double Vd = vVec(nAi) - vVec(nCi);
+		if (nAi == nCi) return;
+
+		double Vd;
+
+		if (nAi != -1 && nCi != -1) Vd = vVec(nAi) - vVec(nCi);
+		else if (nAi == -1) Vd = -vVec(nCi);
+		else Vd = vVec(nAi);
+
 		std::vector<double> ppts;
 		ppts.push_back(Vd);
 

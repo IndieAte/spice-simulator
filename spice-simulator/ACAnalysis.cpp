@@ -45,6 +45,7 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 	// Initialise vectors that will contain information about what kinds of components
 	// are where in the component vector
 	std::vector<int> vSIndexes, cSIndexes, nSIndexes;
+	std::vector<int> vSTmp;
 
 	// Loop over the component vector and populate the vectors with information
 	// about where source and non-source components are
@@ -53,11 +54,27 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 
 		if (typeid(*c) == typeid(ACCurrentSource) || typeid(*c) == typeid(DCCurrentSource)) {
 			cSIndexes.push_back(i);
-		} else if (typeid(*c) == typeid(ACVoltageSource) || typeid(*c) == typeid(DCVoltageSource)) {
+		// Voltage sources require a little more care - we want to handle DC or 0 value voltage
+		// sources first, or otherwise there will be minor inaccuracies for voltage sources
+		// with meaningful values at AC
+		} else if (typeid(*c) == typeid(ACVoltageSource)) {
+			std::vector<double> ppts = c->getProperties();
+			if (ppts[0] != 0) {
+				vSTmp.push_back(i);
+			} else {
+				vSIndexes.push_back(i);
+			}
+		} else if (typeid(*c) == typeid(DCVoltageSource)) {
 			vSIndexes.push_back(i);
 		} else {
 			nSIndexes.push_back(i);
 		}
+	}
+
+	// Add the meaningful value voltage sources onto the back of vSIndexes so they're
+	// handled last
+	for (int i = 0; i < vSTmp.size(); i++) {
+		vSIndexes.push_back(vSTmp[i]);
 	}
 
 	// Initialise values for the logarithmic frequency sweep
