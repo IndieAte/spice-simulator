@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#define _VT 0.025851997
+
 // Component Class
 // Base class for component object, with basic constructor to set component name
 // and the virtual prototypes for two functions, getNodes and getConductance

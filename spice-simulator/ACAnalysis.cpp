@@ -6,6 +6,7 @@ using namespace Eigen;
 
 // Function prototypes for functions that don't need to be externally visible
 Vector3d voltageVectorToPolar(int outputNode, VectorXcd voltageVector, double frequency);
+void convertToSmallSignal(std::vector<Component*>& comps, int nNodes);
 VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSIndexes,
 	std::vector<int> vSIndexes, std::vector<int> nSIndexes, int nNodes, double angFreq);
 void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq);
@@ -41,6 +42,9 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 	} catch (std::invalid_argument& e) {
 		std::cerr << e.what() << std::endl;
 	}
+
+	// Convert the component vector to a small signal equivalent
+	convertToSmallSignal(comps, nNodes);
 
 	// Initialise vectors that will contain information about what kinds of components
 	// are where in the component vector
@@ -125,17 +129,51 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 	return output;
 }
 
-void convertToSmallSignal(std::vector<Component*>& comps) {
+/* Function convertToSmallSignal
+*		This function takes a vector of components and converts nonlinear components to their
+*		small signal equivalent by running a DC operating point analysis and using the results
+*		to derive small signal values
+* 
+*	 Inputs:
+*		std::vector<Component*>& comps - The original circuit described as a component vector
+*		int nNodes                     - The number of nodes in the circuit, excluding ground
+* 
+*  Outputs (By Reference):
+*		std::vector<Component*>& comps - The small signal equivalent circuit description
+*/
+void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
+	// Run the DC operating point analysis
+	VectorXd vVec = runDCOpPoint(comps, nNodes);
+
 	std::vector<int> nlcIndexes;
 
+	// Loops over all components and look for nonlinear components
 	for (int i = 0; i < comps.size(); i++) {
 		Component* c = comps[i];
 
-		if (typeid(*c) == typeid(Diode)) nlcIndexes.push_back(i);
-	}
+		// Handle replacing diodes
+		if (typeid(*c) == typeid(Diode)) {
+			// Get the nodes connected to the diode
+			std::vector<int> nodes = c->getNodes();
+			int nAnode = nodes[0] - 1;
+			int nCathode = nodes[1] - 1;
 
-	if (nlcIndexes.size() == 0) {
-		return;
+			// Get the value of Is for the diode
+			std::vector<double> ppts = c->getProperties();
+			double Is = ppts[1];
+
+			// Calculate the small signal resistance of the diode via Vd (from the DC operating point)
+			// and then the current through the diode
+			double Vd = vVec(nAnode) - vVec(nCathode);
+			double I = Is * (exp(Vd / _VT) - 1);
+			double rd = _VT / I;
+
+			// Replace the diode component with a new resistor component with suitable values
+			nAnode++;
+			nCathode++;
+			delete comps[i];
+			comps[i] = new Resistor("Rd", rd, nAnode, nCathode);
+		}
 	}
 }
 

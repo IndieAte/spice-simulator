@@ -1,7 +1,5 @@
 #include "Component.h"
 
-#define _VT 0.025851997
-
 using namespace std::complex_literals;
 
 // ==================== COMPONENT (BASE CLASS) ====================
@@ -281,6 +279,7 @@ std::vector<double> Diode::getProperties() {
 	std::vector<double> properties;
 
 	properties.push_back(Id);
+	properties.push_back(Is);
 
 	return properties;
 }
