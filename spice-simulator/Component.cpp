@@ -83,6 +83,37 @@ void DCCurrentSource::setProperties(std::vector<double> properties) {
 
 }
 
+// ============== VOLTAGE CONTROLLED CURRENT SOURCE ===============
+
+std::vector<int> VoltageControlledCurrentSource::getNodes() {
+	std::vector<int> nodes;
+	
+	// DCCurrentSource should return the input node first, output node
+	// second to make creating the conduction matrix easier
+	nodes.push_back(nodeIn);
+	nodes.push_back(nodeOut);
+	nodes.push_back(control_nodeIn);
+	nodes.push_back(control_nodeOut);
+
+	return nodes;
+}
+
+std::complex<double> VoltageControlledCurrentSource::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
+	return 0;
+}
+
+std::vector<double> VoltageControlledCurrentSource::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(transconductance);
+
+	return properties;
+}
+
+void VoltageControlledCurrentSource::setProperties(std::vector<double> properties) {
+
+}
+
 // ======================= AC VOLTAGE SOURCE ======================
 
 std::vector<int> ACVoltageSource::getNodes() {
@@ -247,9 +278,13 @@ Diode::Diode(std::string p_name, std::string p_modelName, int p_nodeAnode, int p
 	Component{ p_name }, nodeAnode{ p_nodeAnode }, nodeCathode{ p_nodeCathode } {
 	
 	Vd = 0.7;
-
-	if (p_modelName == "D") Is = pow(10, -12);
-	else Is = pow(10, -12);
+	
+	try {
+		if (p_modelName == "D") Is = pow(10, -12);
+		else throw std::invalid_argument("Invalide diode model: " + p_modelName);
+	} catch (std::invalid_argument& e) {
+		std::cerr << e.what() << std::endl;
+	}
 
 	Gd = (Is / _VT) * exp(Vd / _VT);
 	Id = (Is * (exp(Vd / _VT) - 1)) - (Gd * Vd);
@@ -298,17 +333,27 @@ void Diode::setProperties(std::vector<double> properties) {
 BJT::BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p_nodeBase, int p_nodeEmitter) :
 	Component{ p_name }, modelName{ p_modelName }, nodeCollector{ p_nodeCollector }, nodeBase{ p_nodeBase },
 	nodeEmitter{ p_nodeEmitter } {
-
-	if (modelName == "NPN") {
-		Vbe = 0.7;
-		Vbc = 0.7;
-		Is = pow(10, -12);
-		bf = 100;
-		br = 1;
-		npn = 1;
-	} else if (modelName == "PNP") {
-		npn = 0;
+	
+	try {
+		if (modelName == "NPN") {
+			Is = pow(10, -12);
+			bf = 100;
+			br = 1;
+			npn = 1;
+		} else if (modelName == "PNP") {
+			Is = pow(10, -12);
+			bf = 100;
+			br = 1;
+			npn = 0;
+		} else {
+			throw std::invalid_argument("Invalid BJT model: " + modelName);
+		}
+	} catch (std::invalid_argument& e) {
+		std::cerr << e.what() << std::endl;
 	}
+
+	Vbe = 0.7;
+	Vbc = 0.7;
 
 	double zeta = exp(Vbe / _VT);
 	double xi = exp(Vbc / _VT);
@@ -325,9 +370,15 @@ BJT::BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p
 	Geb = -(Is / _VT) * ((1 + 1 / bf) * zeta - xi);
 	Gee = (Is / _VT) * (1 + 1 / bf) * zeta;
 
-	Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
-	Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
-	Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
+	if (npn == 1) {
+		Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
+		Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
+		Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
+	} else {
+		Ic = -((Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br));
+		Ib = -((Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br));
+		Ie = -((Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf));
+	}
 }
 
 std::vector<int> BJT::getNodes() {
@@ -368,9 +419,12 @@ std::vector<double> BJT::getProperties() {
 }
 
 void BJT::setProperties(std::vector<double> properties) {
-	if (modelName == "NPN") {
+	if (npn == 1) {
 		Vbe = properties[0];
 		Vbc = properties[1];
+	} else {
+		Vbe = -properties[0];
+		Vbc = -properties[1];
 	}
 
 	double zeta = exp(Vbe / _VT);
@@ -388,7 +442,13 @@ void BJT::setProperties(std::vector<double> properties) {
 	Geb = -(Is / _VT) * ((1 + 1 / bf) * zeta - xi);
 	Gee = (Is / _VT) * (1 + 1 / bf) * zeta;
 
-	Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
-	Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
-	Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
+	if (npn == 1) {
+		Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
+		Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
+		Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
+	} else {
+		Ic = -((Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br));
+		Ib = -((Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br));
+		Ie = -((Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf));
+	}
 }
