@@ -295,6 +295,38 @@ void Diode::setProperties(std::vector<double> properties) {
 
 // =========================== BJT ================================
 
+BJT::BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p_nodeBase, int p_nodeEmitter) :
+	Component{ p_name }, modelName{ p_modelName }, nodeCollector{ p_nodeCollector }, nodeBase{ p_nodeBase },
+	nodeEmitter{ p_nodeEmitter } {
+
+	if (modelName == "NPN") {
+		Vbe = 0.7;
+		Vbc = 0.7;
+		Is = pow(1, -12);
+		bf = 100;
+		br = 1;
+	}
+
+	double zeta = exp(Vbe / _VT);
+	double xi = exp(Vbc / _VT);
+
+	Gcc = (Is / _VT) * (1 + 1 / br) * xi;
+	Gcb = (Is / _VT) * (zeta - (1 + 1 / br) * xi);
+	Gce = -(Is / _VT) * zeta;
+
+	Gbc = -(Is / (_VT * br)) * xi;
+	Gbb = (Is / _VT) * (zeta / bf + xi / bf);
+	Gbe = -(Is / (_VT * bf)) * zeta;
+
+	Gec = -(Is / _VT) * xi;
+	Geb = -(Is / _VT) * ((1 + 1 / bf) * zeta - xi);
+	Gee = (Is / _VT) * (1 + 1 / bf) * zeta;
+
+	Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
+	Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
+	Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
+}
+
 std::vector<int> BJT::getNodes() {
 	std::vector<int> nodes;
 
@@ -306,22 +338,53 @@ std::vector<int> BJT::getNodes() {
 }
 
 std::complex<double> BJT::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
-	if (!((std::count(getNodes().begin(), getNodes().end(), p_node1) || 
-	std::count(getNodes().begin(), getNodes().end(), p_node2)))) {
-		return 0;
-	} else {
-		return 0; // NEED CONDUCTANCE HERE
-	}
+	if (p_node1 == nodeCollector && p_node2 == nodeCollector) return Gcc;
+	else if (p_node1 == nodeCollector && p_node2 == nodeBase) return Gcb;
+	else if (p_node1 == nodeCollector && p_node2 == nodeEmitter) return Gce;
+	else if (p_node1 == nodeBase && p_node2 == nodeCollector) return Gbc;
+	else if (p_node1 == nodeBase && p_node2 == nodeBase) return Gbb;
+	else if (p_node1 == nodeBase && p_node2 == nodeEmitter) return Gbe;
+	else if (p_node1 == nodeEmitter && p_node2 == nodeCollector) return Gec;
+	else if (p_node1 == nodeEmitter && p_node2 == nodeBase) return Geb;
+	else if (p_node1 == nodeEmitter && p_node2 == nodeEmitter) return Gee;
+	else return 0;
 }
 
 std::vector<double> BJT::getProperties() {
 	std::vector<double> properties;
 
-	properties.push_back(modelName);
+	properties.push_back(Ic);
+	properties.push_back(Ib);
+	properties.push_back(Ie);
+	properties.push_back(Is);
+	properties.push_back(bf);
+	properties.push_back(br);
 
 	return properties;
 }
 
 void BJT::setProperties(std::vector<double> properties) {
+	if (modelName == "NPN") {
+		Vbe = properties[0];
+		Vbc = properties[1];
+	}
 
+	double zeta = exp(Vbe / _VT);
+	double xi = exp(Vbc / _VT);
+
+	Gcc = (Is / _VT) * (1 + 1 / br) * xi;
+	Gcb = (Is / _VT) * (zeta - (1 + 1 / br) * xi);
+	Gce = -(Is / _VT) * zeta;
+
+	Gbc = -(Is / (_VT * br)) * xi;
+	Gbb = (Is / _VT) * (zeta / bf + xi / bf);
+	Gbe = -(Is / (_VT * bf)) * zeta;
+
+	Gec = -(Is / _VT) * xi;
+	Geb = -(Is / _VT) * ((1 + 1 / bf) * zeta - xi);
+	Gee = (Is / _VT) * (1 + 1 / bf) * zeta;
+
+	Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
+	Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
+	Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
 }
