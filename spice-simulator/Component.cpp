@@ -83,6 +83,37 @@ void DCCurrentSource::setProperties(std::vector<double> properties) {
 
 }
 
+// ============== VOLTAGE CONTROLLED CURRENT SOURCE ===============
+
+std::vector<int> VoltageControlledCurrentSource::getNodes() {
+	std::vector<int> nodes;
+	
+	// DCCurrentSource should return the input node first, output node
+	// second to make creating the conduction matrix easier
+	nodes.push_back(nodeIn);
+	nodes.push_back(nodeOut);
+	nodes.push_back(control_nodeIn);
+	nodes.push_back(control_nodeOut);
+
+	return nodes;
+}
+
+std::complex<double> VoltageControlledCurrentSource::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
+	return 0;
+}
+
+std::vector<double> VoltageControlledCurrentSource::getProperties() {
+	std::vector<double> properties;
+
+	properties.push_back(transconductance);
+
+	return properties;
+}
+
+void VoltageControlledCurrentSource::setProperties(std::vector<double> properties) {
+
+}
+
 // ======================= AC VOLTAGE SOURCE ======================
 
 std::vector<int> ACVoltageSource::getNodes() {

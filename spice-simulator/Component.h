@@ -75,6 +75,25 @@ private:
   int nodeIn, nodeOut;
 };
 
+// VoltageControlledCurrentSource Class
+// Derived from Component, implements a Voltage Controlled Current Source
+class VoltageControlledCurrentSource : public Component {
+public:
+  VoltageControlledCurrentSource(std::string p_name, double p_transconductance,
+    int p_nodeIn, int p_nodeOut, int p_control_nodeIn, int p_control_nodeOut) :
+    Component{ p_name }, transconductance { p_transconductance }, nodeIn { p_nodeIn },
+    nodeOut { p_nodeOut }, control_nodeIn { p_control_nodeIn }, control_nodeOut { p_control_nodeOut } {}
+
+  std::vector<int> getNodes() override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
+  std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
+    
+private:
+  double transconductance;
+  int nodeIn, nodeOut, control_nodeIn, control_nodeOut;
+};
+
 // ACVoltageSource Class
 // Derived from Component, implements an AC voltage source
 class ACVoltageSource : public Component {
