@@ -34,3 +34,12 @@ struct ACCommand : Command {
     return v;
   }
 };
+
+struct OPCommand : Command {
+  OPCommand(std::string p_type) : Command { p_type } {}
+
+  std::vector<double> getValues() {
+    std::vector<double> v;
+    return v;
+  }
+};
