@@ -211,6 +211,14 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 				}
 				break;
 			}
+			case 'G': {
+				if (v2[1] != v2[2] && v2.size() == 6) {
+					v1.push_back(new VoltageControlledCurrentSource(v2[0], decode_value(v2[5]), get_node_number(v2[1], n), get_node_number(v2[2], n), get_node_number(v2[3], n), get_node_number(v2[4], n)));
+				} else if (v2[1] != v2[2]) {
+					throw std::invalid_argument("Invalid Formatting of Voltage Controlled Current Source: " + v2[0]);
+				}
+				break;
+			}
 			case '.': {
 				if (v2[0] == ".ac") {
 					if (v2.size() == 5) {
