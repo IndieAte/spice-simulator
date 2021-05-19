@@ -224,7 +224,13 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 					if (v2.size() == 5) {
 						command = new ACCommand("AC", decode_sweep(v2[1]), decode_value(v2[2]), decode_value(v2[3]), decode_value(v2[4]));
 					} else {
-						throw std::invalid_argument("Invalid Formatting of AC Command: " + v2[0]);
+						throw std::invalid_argument("Invalid Formatting of AC Command");
+					}
+				} else if (v2[0] == ".op") {
+					if (v2.size() == 1) {
+						command = new OPCommand("OP");
+					} else {
+						throw std::invalid_argument("Invalid Formatting of OP Command");
 					}
 				}
 			}
