@@ -144,14 +144,15 @@
   <ItemGroup>
     <ClCompile Include="ACAnalysis.cpp" />
     <ClCompile Include="Component.cpp" />
-    <ClCompile Include="ConductanceMatrix.cpp" />
+    <ClCompile Include="DCOpPoint.cpp" />
     <ClCompile Include="ParseFile.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ACAnalysis.h" />
-    <ClInclude Include="ConductanceMatrix.h" />
+    <ClInclude Include="Command.h" />
     <ClInclude Include="Component.h" />
+    <ClInclude Include="DCOpPoint.h" />
     <ClInclude Include="ParseFile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
