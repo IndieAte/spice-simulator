@@ -46,7 +46,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 		// Also note that we treat inductors as 0 value voltage sources for DC operating point analysis
 		} else if (typeid(*c) == typeid(Inductor) || typeid(*c) == typeid(ACVoltageSource)) {
 			vSIndexes.push_back(i);
-		} else if (typeid(*c) == typeid(Diode)) {
+		} else if (typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT)) {
 			nlCIndexes.push_back(i);
 		} else {
 			lCIndexes.push_back(i);
@@ -230,6 +230,44 @@ void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) 
 			gMat(nCi, nCi) += g;
 			iVec(nCi) += I;
 		}
+
+	// Handle BJTs
+	} else if (typeid(*comp) == typeid(BJT)) {
+		// Name the nodes to declutter the code
+		int nC = nodes[0];
+		int nB = nodes[1];
+		int nE = nodes[2];
+
+		// Get the indexes of the nodes in gMat and iVec
+		int nCi = nC - 1;
+		int nBi = nB - 1;
+		int nEi = nE - 1;
+
+		// Get the currents into each terminal
+		std::vector<double> ppts = comp->getProperties();
+		double Ic = ppts[0];
+		double Ib = ppts[1];
+		double Ie = ppts[2];
+
+		// Update gMat and iVec depending on which, if any, nodes are connected to ground
+		if (nC != 0) {
+			gMat(nCi, nCi) += std::real(comp->getConductance(nC, nC, 0));
+			iVec(nCi) += Ic;
+			if (nB != 0) gMat(nCi, nBi) += std::real(comp->getConductance(nC, nB, 0));
+			if (nE != 0) gMat(nCi, nEi) += std::real(comp->getConductance(nC, nE, 0));
+		}
+		if (nB != 0) {
+			gMat(nBi, nBi) += std::real(comp->getConductance(nB, nB, 0));
+			iVec(nBi) += Ib;
+			if (nC != 0) gMat(nBi, nCi) += std::real(comp->getConductance(nB, nC, 0));
+			if (nE != 0) gMat(nBi, nEi) += std::real(comp->getConductance(nB, nE, 0));
+		}
+		if (nE != 0) {
+			gMat(nEi, nEi) += std::real(comp->getConductance(nE, nE, 0));
+			iVec(nEi) += Ie;
+			if (nC != 0) gMat(nEi, nCi) += std::real(comp->getConductance(nE, nC, 0));
+			if (nB != 0) gMat(nEi, nBi) += std::real(comp->getConductance(nE, nB, 0));
+		}
 	}
 }
 
@@ -348,6 +386,7 @@ void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 void updateNonlinearComponent(Component* comp, VectorXd vVec) {
 	// Get the nodes connected to the component
 	std::vector<int> nodes = comp->getNodes();
+	std::vector<double> ppts;
 
 	// Update diodes
 	if (typeid(*comp) == typeid(Diode)) {
@@ -363,10 +402,39 @@ void updateNonlinearComponent(Component* comp, VectorXd vVec) {
 		else if (nAi == -1) Vd = -vVec(nCi);
 		else Vd = vVec(nAi);
 
-		std::vector<double> ppts;
 		ppts.push_back(Vd);
 
 		// Update the voltage across the diode
+		comp->setProperties(ppts);
+
+	// Update BJTs
+	} else if (typeid(*comp) == typeid(BJT)) {
+		// Get the indexes of the different nodes in gMat and iVec
+		int nCi = nodes[0] - 1;
+		int nBi = nodes[1] - 1;
+		int nEi = nodes[2] - 1;
+
+		double Vbe, Vbc;
+
+		// Calculate Vbe and Vbc depending on which, if any, nodes are ground
+		if (nBi == -1) {
+			if (nEi == -1) Vbe = 0;
+			else Vbe = -vVec(nEi);
+
+			if (nCi == -1) Vbc = 0;
+			else Vbc = -vVec(nCi);
+		} else {
+			if (nEi == -1) Vbe = vVec(nBi);
+			else Vbe = vVec(nBi) - vVec(nEi);
+
+			if (nCi == -1) Vbc = vVec(nBi);
+			else Vbc = vVec(nBi) - vVec(nCi);
+		}
+
+		ppts.push_back(Vbe);
+		ppts.push_back(Vbc);
+
+		// Update the BJT's values
 		comp->setProperties(ppts);
 	}
 }

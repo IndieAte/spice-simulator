@@ -302,7 +302,7 @@ BJT::BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p
 	if (modelName == "NPN") {
 		Vbe = 0.7;
 		Vbc = 0.7;
-		Is = pow(1, -12);
+		Is = pow(10, -12);
 		bf = 100;
 		br = 1;
 	}
@@ -315,7 +315,7 @@ BJT::BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p
 	Gce = -(Is / _VT) * zeta;
 
 	Gbc = -(Is / (_VT * br)) * xi;
-	Gbb = (Is / _VT) * (zeta / bf + xi / bf);
+	Gbb = (Is / _VT) * (zeta / bf + xi / br);
 	Gbe = -(Is / (_VT * bf)) * zeta;
 
 	Gec = -(Is / _VT) * xi;
@@ -377,7 +377,7 @@ void BJT::setProperties(std::vector<double> properties) {
 	Gce = -(Is / _VT) * zeta;
 
 	Gbc = -(Is / (_VT * br)) * xi;
-	Gbb = (Is / _VT) * (zeta / bf + xi / bf);
+	Gbb = (Is / _VT) * (zeta / bf + xi / br);
 	Gbe = -(Is / (_VT * bf)) * zeta;
 
 	Gec = -(Is / _VT) * xi;

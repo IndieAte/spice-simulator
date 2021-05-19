@@ -6,7 +6,8 @@ int main(int argc, char** argv) {
 	std::ifstream infile;
 	std::string outfilePath;
 	int outputNode;
-
+	
+	/*
 	if (argc == 1) {
 		std::cout << "Error: No input file provided" << std::endl;
 		infile.open("../testCircuit.cir");
@@ -23,7 +24,9 @@ int main(int argc, char** argv) {
 		infile.open(argv[1]);
 		outputNode = std::stoi(argv[2]);
 		outfilePath = argv[3];
-	}
+	}*/
+
+	infile.open("../testCircuit.cir");
 
 	if(!infile.is_open()){
 		return EXIT_FAILURE;
@@ -36,8 +39,9 @@ int main(int argc, char** argv) {
 	std::vector<Component*> components = decode_file(infile, nNodes, command);
 	infile.close();
 
-	//std::cout << runDCOpPoint(components, nNodes) << std::endl;
+	std::cout << runDCOpPoint(components, nNodes) << std::endl;
 
+	/*
 	std::vector<Eigen::Vector3d> results;
 	std::vector<double> command_values = command->getValues();
 	if (command->type == "AC") {
@@ -62,4 +66,5 @@ int main(int argc, char** argv) {
 		std::cout << "Failed to open output.csv" << std::endl;
 		return EXIT_FAILURE;
 	}
+	*/
 }
