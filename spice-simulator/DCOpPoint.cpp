@@ -6,7 +6,7 @@ VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std:
 	std::vector<int> lCIndexes, std::vector<int> nlCIndexes, int nNodes);
 void linearComponentHandler(Component* comp, MatrixXd& gMat);
 void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
-void DCcurrentSourceHandler(Component* comp, VectorXd& iVec);
+void DCcurrentSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
 void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
 void updateNonlinearComponent(Component* comp, VectorXd vVec);
 
@@ -32,7 +32,8 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	for (int i = 0; i < comps.size(); i++) {
 		Component* c = comps[i];
 
-		if (typeid(*c) == typeid(ACCurrentSource) || typeid(*c) == typeid(DCCurrentSource)) {
+		if (typeid(*c) == typeid(ACCurrentSource) || typeid(*c) == typeid(DCCurrentSource) ||
+			typeid(*c) == typeid(VoltageControlledCurrentSource)) {
 			cSIndexes.push_back(i);
 		// Note that we need to take care with voltage sources, as we want to process 0 valued voltage
 		// sources first
@@ -124,7 +125,7 @@ VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std:
 	// Loops over current sources and call the handler for them
 	for (int i = 0; i < cSIndexes.size(); i++) {
 		int j = cSIndexes[i];
-		DCcurrentSourceHandler(comps[j], iVec);
+		DCcurrentSourceHandler(comps[j], gMat, iVec);
 	}
 
 	// Loops over voltage sources (and inductors) and call the handler for them
@@ -272,22 +273,26 @@ void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) 
 }
 
 /* Function DCcurrentSourceHandler
-*		This function handles updating the current vector with the effects of current sources (note that the
-*		DC doesn't refer to DC current sources and just exists to disambiguate from a similar function in
+*		This function handles updating the current vector and conductance matrix with the effects of current sources
+*		(note that the DC doesn't refer to DC current sources and just exists to disambiguate from a similar function in
 *		ACAnalysis.cpp)
 * 
 *  Inputs:
 *		Component* comp - The component being conidered
+*		MatrixXd& gMat  - The conductance matrix before being updated
 *		VectorXd& iVec  - The current vector before being updated
 * 
 *  Outputs (By Reference):
+*		MatrixXd& gMat  - The updated conductance matrix
 *		VectorXd& iVec  - The updated current vector
 */
-void DCcurrentSourceHandler(Component* comp, VectorXd& iVec) {
-	// We only need to make changes for DC current sources in DC operating point analysis
+void DCcurrentSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
+	// Get the nodes connected to the source
+	std::vector<int> nodes = comp->getNodes();
+
+	// We only need to make changes for DC/Voltage Controlled current sources in DC operating point analysis
 	if (typeid(*comp) == typeid(DCCurrentSource)) {
-		// Get the nodes connected to the source and give them names
-		std::vector<int> nodes = comp->getNodes();
+		// Give names to the nodes connected to the source
 		int nIn = nodes[0] - 1;
 		int nOut = nodes[1] - 1;
 
@@ -304,6 +309,40 @@ void DCcurrentSourceHandler(Component* comp, VectorXd& iVec) {
 		} else {
 			iVec(nIn) -= current;
 		}
+	} else if (typeid(*comp) == typeid(VoltageControlledCurrentSource)) {
+		// Name the connected nodes
+		int nCin = nodes[0] - 1;
+		int nCout = nodes[1] - 1;
+		int nVp = nodes[2] - 1;
+		int nVn = nodes[3] - 1;
+
+		// Expand the conductance matrix and current vector to make space for the equations
+		// describing the voltage controlled current source
+		int cols = gMat.cols() + 1;
+		int rows = gMat.rows() + 1;
+		gMat.conservativeResize(rows, cols);
+
+		iVec.conservativeResize(rows);
+
+		rows--;
+		cols--;
+		// Clear the new rows of garbage
+		gMat.row(rows).setZero();
+		gMat.col(cols).setZero();
+
+		// Get the transconductance
+		std::vector<double> ppts = comp->getProperties();
+		double g = ppts[0];
+
+		// Update gMat and iVec depending on which nodes, if any, are ground
+		if (nVp != -1) gMat(rows, nVp) = g;
+		if (nVn != -1) gMat(rows, nVn) = -g;
+		gMat(rows, cols) = -1;
+
+		if (nCin != -1) gMat(nCin, cols) = 1;
+		if (nCout != -1) gMat(nCout, cols) = -1;
+
+		iVec(rows) = 0;
 	}
 }
 

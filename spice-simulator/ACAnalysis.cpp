@@ -10,7 +10,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes);
 VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSIndexes,
 	std::vector<int> vSIndexes, std::vector<int> nSIndexes, int nNodes, double angFreq);
 void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq);
-void currentSourceHandler(Component* comp, VectorXcd& iVec);
+void currentSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec);
 void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec);
 
 /* Function runACAnalysis
@@ -56,8 +56,10 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 	for (int i = 0; i < comps.size(); i++) {
 		Component* c = comps[i];
 
-		if (typeid(*c) == typeid(ACCurrentSource) || typeid(*c) == typeid(DCCurrentSource)) {
+		if (typeid(*c) == typeid(ACCurrentSource) || typeid(*c) == typeid(DCCurrentSource) || 
+			typeid(*c) == typeid(VoltageControlledCurrentSource)) {
 			cSIndexes.push_back(i);
+
 		// Voltage sources require a little more care - we want to handle DC or 0 value voltage
 		// sources first, or otherwise there will be minor inaccuracies for voltage sources
 		// with meaningful values at AC
@@ -173,6 +175,64 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			nCathode++;
 			delete comps[i];
 			comps[i] = new Resistor("Rd", rd, nAnode, nCathode);
+
+		// Handle replacing BJTs
+		} else if (typeid(*c) == typeid(BJT)) {
+			// Get the nodes connected to the BJT
+			std::vector<int> nodes = c->getNodes();
+			int nCollector = nodes[0] - 1;
+			int nBase = nodes[1] - 1;
+			int nEmitter = nodes[2] - 1;
+		
+			// Get the relevant properties to calculate the small signal model
+			std::vector<double> ppts = c->getProperties();
+			double npn = ppts[3];
+			double Is = ppts[4];
+			double bf = ppts[5];
+			double br = ppts[6];
+
+			double Vbe, Vbc, Ic;
+
+			// Get Vbe and Vbc based on whether any nodes are ground
+			if (nBase == -1) {
+				if (nEmitter == -1) Vbe = 0;
+				else Vbe = -vVec(nEmitter);
+
+				if (nCollector == -1) Vbc = 0;
+				else Vbc = -vVec(nCollector);
+			} else {
+				if (nEmitter == -1) Vbe = vVec(nBase);
+				else Vbe = vVec(nBase) - vVec(nEmitter);
+
+				if (nCollector == -1) Vbc = vVec(nBase);
+				else Vbc = vVec(nBase) - vVec(nCollector);
+			}
+
+			// Calculate the collector current appropriately depending on whether the BJT is NPN or PNP
+			if (npn == 1) {
+				Ic = Is * (exp(Vbe / _VT) - exp(Vbc / _VT) - (exp(Vbc / _VT) - 1) / br);
+			} else {
+				Ic = -Is * (exp(-Vbe / _VT) - exp(Vbc / _VT) - (exp(-Vbc / _VT) - 1) / br);
+			}
+
+			// Calculate gm and rbe
+			double gm = Ic / _VT;
+			double rbe = bf / gm;
+
+			nCollector++;
+			nBase++;
+			nEmitter++;
+
+			// Replace the BJT in the circuit description with the small signal model
+			delete(comps[i]);
+			comps[i] = new Resistor("Rbe", rbe, nBase, nEmitter);
+			auto iter = comps.begin();
+			iter += i;
+			if (npn == 1) {
+				comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
+			} else {
+				comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nEmitter, nBase));
+			}
 		}
 	}
 }
@@ -210,7 +270,7 @@ VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSInd
 	// Update the current vector with the currents from current sources
 	for (int i = 0; i < cSIndexes.size(); i++) {
 		int j = cSIndexes[i];
-		currentSourceHandler(comps[j], iVec);
+		currentSourceHandler(comps[j], gMat, iVec);
 	}
 
 	// Update the conductance matrix and current vector with the effects of
@@ -278,17 +338,20 @@ void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq) {
 *	Inputs:
 *		Component* comp	- The current source component
 *		VectorXcd& iVec	- The current vector as it currently is
+*		MatrixXcd& gMat - The conductance matrix as it currently is
 * 
 * Outputs (By Reference):
 *		VectorXcd& iVec	- The current vector after having been updated
+*		MatrixXcd& gMat - The conductance matrix after having been updated
 */
-void currentSourceHandler(Component* comp, VectorXcd& iVec) {
+void currentSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
+	// Get the connected nodes
+	std::vector<int> nodes = comp->getNodes();
+
 	// Check if the current source is AC, as DC current sources will
 	// have no effect on the AC analysis
 	if (typeid(*comp) == typeid(ACCurrentSource)) {
-		// Get the nodes connected to the source and name them as the input
-		// and output for clarity
-		std::vector<int> nodes = comp->getNodes();
+		// Name the connected nodes
 		int nIn = nodes[0] - 1;
 		int nOut = nodes[1] - 1;
 
@@ -308,6 +371,40 @@ void currentSourceHandler(Component* comp, VectorXcd& iVec) {
 		} else {
 			iVec(nIn) -= current;
 		}
+	} else if (typeid(*comp) == typeid(VoltageControlledCurrentSource)) {
+		// Name the connected nodes
+		int nCin = nodes[0] - 1;
+		int nCout = nodes[1] - 1;
+		int nVp = nodes[2] - 1;
+		int nVn = nodes[3] - 1;
+
+		// Expand the conductance matrix and current vector to make space for the equations
+		// describing the voltage controlled current source
+		int cols = gMat.cols() + 1;
+		int rows = gMat.rows() + 1;
+		gMat.conservativeResize(rows, cols);
+
+		iVec.conservativeResize(rows);
+
+		rows--;
+		cols--;
+		// Clear the new rows of garbage
+		gMat.row(rows).setZero();
+		gMat.col(cols).setZero();
+
+		// Get the transconductance
+		std::vector<double> ppts = comp->getProperties();
+		double g = ppts[0];
+
+		// Update gMat and iVec depending on which nodes, if any, are ground
+		if (nVp != -1) gMat(rows, nVp) = g;
+		if (nVn != -1) gMat(rows, nVn) = -g;
+		gMat(rows, cols) = -1;
+
+		if (nCin != -1) gMat(nCin, cols) = 1;
+		if (nCout != -1) gMat(nCout, cols) = -1;
+
+		iVec(rows) = 0;
 	}
 }
 
