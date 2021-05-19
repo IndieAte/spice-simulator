@@ -200,5 +200,6 @@ public:
     double Vbe, Vbc, Is, bf, br;
     double Gcc, Gcb, Gce, Gbc, Gbb, Gbe, Gec, Geb, Gee;
     double Ic, Ib, Ie;
+    double npn;
     int nodeCollector, nodeBase, nodeEmitter;
 };

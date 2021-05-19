@@ -305,6 +305,9 @@ BJT::BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p
 		Is = pow(10, -12);
 		bf = 100;
 		br = 1;
+		npn = 1;
+	} else if (modelName == "PNP") {
+		npn = 0;
 	}
 
 	double zeta = exp(Vbe / _VT);
@@ -356,6 +359,7 @@ std::vector<double> BJT::getProperties() {
 	properties.push_back(Ic);
 	properties.push_back(Ib);
 	properties.push_back(Ie);
+	properties.push_back(npn);
 	properties.push_back(Is);
 	properties.push_back(bf);
 	properties.push_back(br);
