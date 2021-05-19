@@ -6,6 +6,7 @@ using namespace Eigen;
 
 // Function prototypes for functions that don't need to be externally visible
 Vector3d voltageVectorToPolar(int outputNode, VectorXcd voltageVector, double frequency);
+void convertToSmallSignal(std::vector<Component*>& comps, int nNodes);
 VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSIndexes,
 	std::vector<int> vSIndexes, std::vector<int> nSIndexes, int nNodes, double angFreq);
 void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq);
@@ -42,9 +43,13 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 		std::cerr << e.what() << std::endl;
 	}
 
+	// Convert the component vector to a small signal equivalent
+	convertToSmallSignal(comps, nNodes);
+
 	// Initialise vectors that will contain information about what kinds of components
 	// are where in the component vector
 	std::vector<int> vSIndexes, cSIndexes, nSIndexes;
+	std::vector<int> vSTmp;
 
 	// Loop over the component vector and populate the vectors with information
 	// about where source and non-source components are
@@ -53,11 +58,27 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 
 		if (typeid(*c) == typeid(ACCurrentSource) || typeid(*c) == typeid(DCCurrentSource)) {
 			cSIndexes.push_back(i);
-		} else if (typeid(*c) == typeid(ACVoltageSource) || typeid(*c) == typeid(DCVoltageSource)) {
+		// Voltage sources require a little more care - we want to handle DC or 0 value voltage
+		// sources first, or otherwise there will be minor inaccuracies for voltage sources
+		// with meaningful values at AC
+		} else if (typeid(*c) == typeid(ACVoltageSource)) {
+			std::vector<double> ppts = c->getProperties();
+			if (ppts[0] != 0) {
+				vSTmp.push_back(i);
+			} else {
+				vSIndexes.push_back(i);
+			}
+		} else if (typeid(*c) == typeid(DCVoltageSource)) {
 			vSIndexes.push_back(i);
 		} else {
 			nSIndexes.push_back(i);
 		}
+	}
+
+	// Add the meaningful value voltage sources onto the back of vSIndexes so they're
+	// handled last
+	for (int i = 0; i < vSTmp.size(); i++) {
+		vSIndexes.push_back(vSTmp[i]);
 	}
 
 	// Initialise values for the logarithmic frequency sweep
@@ -108,6 +129,54 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 	return output;
 }
 
+/* Function convertToSmallSignal
+*		This function takes a vector of components and converts nonlinear components to their
+*		small signal equivalent by running a DC operating point analysis and using the results
+*		to derive small signal values
+* 
+*	 Inputs:
+*		std::vector<Component*>& comps - The original circuit described as a component vector
+*		int nNodes                     - The number of nodes in the circuit, excluding ground
+* 
+*  Outputs (By Reference):
+*		std::vector<Component*>& comps - The small signal equivalent circuit description
+*/
+void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
+	// Run the DC operating point analysis
+	VectorXd vVec = runDCOpPoint(comps, nNodes);
+
+	std::vector<int> nlcIndexes;
+
+	// Loops over all components and look for nonlinear components
+	for (int i = 0; i < comps.size(); i++) {
+		Component* c = comps[i];
+
+		// Handle replacing diodes
+		if (typeid(*c) == typeid(Diode)) {
+			// Get the nodes connected to the diode
+			std::vector<int> nodes = c->getNodes();
+			int nAnode = nodes[0] - 1;
+			int nCathode = nodes[1] - 1;
+
+			// Get the value of Is for the diode
+			std::vector<double> ppts = c->getProperties();
+			double Is = ppts[1];
+
+			// Calculate the small signal resistance of the diode via Vd (from the DC operating point)
+			// and then the current through the diode
+			double Vd = vVec(nAnode) - vVec(nCathode);
+			double I = Is * (exp(Vd / _VT) - 1);
+			double rd = _VT / I;
+
+			// Replace the diode component with a new resistor component with suitable values
+			nAnode++;
+			nCathode++;
+			delete comps[i];
+			comps[i] = new Resistor("Rd", rd, nAnode, nCathode);
+		}
+	}
+}
+
 /* Function solveAtFrequency
 *		This function solves the node voltages of the circuit at the given angular frequency
 *		and returns them in rectangular form
@@ -144,6 +213,8 @@ VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSInd
 		currentSourceHandler(comps[j], iVec);
 	}
 
+	// Update the conductance matrix and current vector with the effects of
+	// voltage sources
 	for (int i = 0; i < vSIndexes.size(); i++) {
 		int j = vSIndexes[i];
 		voltageSourceHandler(comps[j], gMat, iVec);
@@ -179,10 +250,6 @@ void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq) {
 		// Shorter names for the nodes connected to comp
 		int n0 = nodes[0];
 		int n1 = nodes[1];
-
-		// If comp connects a node to itself, then it will have no effect
-		// as it is effectively short circuited
-		if (n0 == n1) return;
 
 		// Shorter names for the indexes within the conductance matrix
 		// of the nodes connected to comp
@@ -225,9 +292,6 @@ void currentSourceHandler(Component* comp, VectorXcd& iVec) {
 		int nIn = nodes[0] - 1;
 		int nOut = nodes[1] - 1;
 
-		// If the current source is short circuited it will have no effect
-		if (nIn == nOut) return;
-
 		// Get the current of the source as a phasor
 		std::vector<double> ppts = comp->getProperties();
 		double ampl = ppts[0];
@@ -266,14 +330,6 @@ void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
 	std::vector<int> nodes = comp->getNodes();
 	int nPos = nodes[0] - 1;
 	int nNeg = nodes[1] - 1;
-
-	// Check if the voltage source is short circuited and if it is, throw an
-	// error as the node it's connected to will be undefined
-	try {
-		if (nPos == nNeg) throw std::invalid_argument("Voltage source shorted");
-	} catch (std::invalid_argument& e) {
-		std::cerr << e.what() << std::endl;
-	}
 
 	// Set the voltage to 0 by default, meaning no work has to be done for
 	// DC sources
