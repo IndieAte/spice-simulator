@@ -4,7 +4,7 @@ using namespace Eigen;
 
 VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std::vector<int> vSIndexes,
 	std::vector<int> lCIndexes, std::vector<int> nlCIndexes, int nNodes);
-void linearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
+void linearComponentHandler(Component* comp, MatrixXd& gMat);
 void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
 void DCcurrentSourceHandler(Component* comp, VectorXd& iVec);
 void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec);
@@ -112,7 +112,7 @@ VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std:
 	// Loops over linear components and call the handler for them
 	for (int i = 0; i < lCIndexes.size(); i++) {
 		int j = lCIndexes[i];
-		linearComponentHandler(comps[j], gMat, iVec);
+		linearComponentHandler(comps[j], gMat);
 	}
 
 	// Loops over nonlinear components and call the handler for them
@@ -145,20 +145,34 @@ VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std:
 	return vVec;
 }
 
-void linearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
+/* Function linearComponentHandler
+*		This function updates the conductance matrix with the effects of linear components
+* 
+*  Inputs:
+*		Component* comp - The linear component being handled
+*		MatrixXd& gMat  - The conductance matrix before being updated
+* 
+*  Outputs (By Reference):
+*		MatrixXd& gMat  - The conductance matrix after being updated
+*/
+void linearComponentHandler(Component* comp, MatrixXd& gMat) {
+	// Get the nodes connected to the component
 	std::vector<int> nodes = comp->getNodes();
 
 	int n0 = nodes[0];
 	int n1 = nodes[1];
 
-	if (n0 == n1) return;
-
+	// Handle resistors
 	if (typeid(*comp) == typeid(Resistor)) {
+		// Get indexes into gMat for the two nodes
 		int n0i = n0 - 1;
 		int n1i = n1 - 1;
 
+		// Get the conductance of the resistor
 		 double g = std::real(comp->getConductance(n0, n1, 0));
 
+		 // Update the conductance matrix accordingly to whether any of the connected
+		 // nodes are ground
 		if (n0 != 0 && n1 != 0) {
 			gMat(n0i, n1i) -= g;
 			gMat(n1i, n0i) -= g;
@@ -169,23 +183,39 @@ void linearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 	}
 }
 
+/* Function nonlinearComponentHandler
+*		This function updates the conductance matrix and current vector with the effects of nonlinear components
+* 
+*  Inputs:
+*		Component* comp - The nonlinear component being considered
+*		MatrixXd& gMat  - The conductance matrix before being updated
+*		VectorXd& iVec  - The current vector before being updated
+* 
+*  Outputs (By Reference):
+*		MatrixXd& gMat  - The updated conductance matrix
+*		VectorXd& iVec  - The updated current vector
+*/
 void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
+	// Get the nodes connected to the component
 	std::vector<int> nodes = comp->getNodes();
 
+	// Handle diodes
 	if (typeid(*comp) == typeid(Diode)) {
+		// Name the connected nodes for legibility
 		int nAnode = nodes[0];
 		int nCathode = nodes[1];
 
-		// Note: These can be removed, already checked earlier
-		if (nAnode == nCathode) return;
-
+		// Get the indexes into gMat and iVec of the nodes
 		int nAi = nAnode - 1;
 		int nCi = nCathode - 1;
 
+		// Get the companion model conductance and current of the diode in its current
+		// state
 		double g = std::real(comp->getConductance(nAnode, nCathode, 0));
 		std::vector<double> ppts = comp->getProperties();
 		double I = ppts[0];
 		
+		// Update gMat and iVec according to whether either node connected to the diode is ground
 		if (nAi != -1 && nCi != -1) {
 			gMat(nAi, nCi) -= g;
 			gMat(nCi, nAi) -= g;
@@ -203,17 +233,31 @@ void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) 
 	}
 }
 
+/* Function DCcurrentSourceHandler
+*		This function handles updating the current vector with the effects of current sources (note that the
+*		DC doesn't refer to DC current sources and just exists to disambiguate from a similar function in
+*		ACAnalysis.cpp)
+* 
+*  Inputs:
+*		Component* comp - The component being conidered
+*		VectorXd& iVec  - The current vector before being updated
+* 
+*  Outputs (By Reference):
+*		VectorXd& iVec  - The updated current vector
+*/
 void DCcurrentSourceHandler(Component* comp, VectorXd& iVec) {
+	// We only need to make changes for DC current sources in DC operating point analysis
 	if (typeid(*comp) == typeid(DCCurrentSource)) {
+		// Get the nodes connected to the source and give them names
 		std::vector<int> nodes = comp->getNodes();
 		int nIn = nodes[0] - 1;
 		int nOut = nodes[1] - 1;
 
-		if (nIn == nOut) return;
-
+		// Get the current of the source
 		std::vector<double> ppts = comp->getProperties();
 		double current = ppts[0];
 
+		// Update the current vector depending on whether any nodes are ground
 		if (nIn != -1 && nOut != -1) {
 			iVec(nIn) -= current;
 			iVec(nOut) += current;
@@ -225,25 +269,42 @@ void DCcurrentSourceHandler(Component* comp, VectorXd& iVec) {
 	}
 }
 
+/* Function DCvoltageSourceHandler
+*		This function handles updating the current vector and conductance matrix with the effects of 
+*   voltage sources (note that the DC doesn't refer to DC voltage sources and just exists to 
+*   disambiguate from a similar function in ACAnalysis.cpp)
+*  
+*  Inputs:
+*		Component* comp - The component being considered
+*		MatrixXd& gMat  - The conduction matrix before being updated
+*		VectorXd& iVec  - The current vector before being updated
+* 
+*  Outputs (By Reference):
+*		MatrixXd& gMat  - The updated conductance matrix
+*		VectorXd& iVec  - The updated current vector
+*/
 void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
+	// Get and name the nodes connected to the voltage source
 	std::vector<int> nodes = comp->getNodes();
 	int nPos = nodes[0] - 1;
 	int nNeg = nodes[1] - 1;
 
-	try {
-		if (nPos == nNeg) throw std::invalid_argument("Voltage source shorted");
-	} catch (std::invalid_argument& e) {
-		std::cerr << e.what() << std::endl;
-	}
-
+	// By default assume the DC voltage is zero
 	double voltage = 0;
 
+	// Update the DC voltage if comp is a DC voltage source
 	if (typeid(*comp) == typeid(DCVoltageSource)) {
 		std::vector<double> ppts = comp->getProperties();
 		voltage = ppts[0];
 	}
 
+	// Update gMat and iVec appropriately depending on whether either node
+	// is ground
 	if (nPos != -1 && nNeg != -1) {
+		// Floating sources need special treatment, and need an extra unknown in the voltage vector
+		// representing the current through the source and another equation describing the source.
+		// This is implemented by adding an extra row and column to the conductance matrix and an extra
+		// entry to the current vector
 		int cols = gMat.cols() + 1;
 		int rows = gMat.rows() + 1;
 		gMat.conservativeResize(rows, cols);
@@ -252,12 +313,15 @@ void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 
 		rows--;
 		cols--;
+		// If we don't call setZero, positions we don't explicitly set may contain garbage
 		gMat.row(rows).setZero();
 		gMat.col(cols).setZero();
 
+		// Add the equation describing the source
 		gMat(rows, nPos) = 1;
 		gMat(rows, nNeg) = -1;
 
+		// Add the unknown current through the source
 		gMat(nPos, cols) = -1;
 		gMat(nNeg, cols) = 1;
 
@@ -273,17 +337,28 @@ void DCvoltageSourceHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) {
 	}
 }
 
+/* Function updateNonlinearComponent
+*		Updates the properties of a nonlinear component with the effect of the last
+*		Newton-Raphson iteration
+* 
+*  Inputs:
+*		Component* comp - The component to be updated
+*		VectorXd vVec   - The results of the last iteration
+*/
 void updateNonlinearComponent(Component* comp, VectorXd vVec) {
+	// Get the nodes connected to the component
 	std::vector<int> nodes = comp->getNodes();
 
+	// Update diodes
 	if (typeid(*comp) == typeid(Diode)) {
+		// Get the index into vVec of the nodes
 		int nAi = nodes[0] - 1;
 		int nCi = nodes[1] - 1;
 
-		if (nAi == nCi) return;
-
 		double Vd;
 
+		// Calculate the voltage across the diode accordingly based on whether either node
+		// is ground
 		if (nAi != -1 && nCi != -1) Vd = vVec(nAi) - vVec(nCi);
 		else if (nAi == -1) Vd = -vVec(nCi);
 		else Vd = vVec(nAi);
@@ -291,6 +366,7 @@ void updateNonlinearComponent(Component* comp, VectorXd vVec) {
 		std::vector<double> ppts;
 		ppts.push_back(Vd);
 
+		// Update the voltage across the diode
 		comp->setProperties(ppts);
 	}
 }

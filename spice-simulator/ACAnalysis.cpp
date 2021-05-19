@@ -251,10 +251,6 @@ void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq) {
 		int n0 = nodes[0];
 		int n1 = nodes[1];
 
-		// If comp connects a node to itself, then it will have no effect
-		// as it is effectively short circuited
-		if (n0 == n1) return;
-
 		// Shorter names for the indexes within the conductance matrix
 		// of the nodes connected to comp
 		int n0i = n0 - 1;
@@ -296,9 +292,6 @@ void currentSourceHandler(Component* comp, VectorXcd& iVec) {
 		int nIn = nodes[0] - 1;
 		int nOut = nodes[1] - 1;
 
-		// If the current source is short circuited it will have no effect
-		if (nIn == nOut) return;
-
 		// Get the current of the source as a phasor
 		std::vector<double> ppts = comp->getProperties();
 		double ampl = ppts[0];
@@ -337,14 +330,6 @@ void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec) {
 	std::vector<int> nodes = comp->getNodes();
 	int nPos = nodes[0] - 1;
 	int nNeg = nodes[1] - 1;
-
-	// Check if the voltage source is short circuited and if it is, throw an
-	// error as the node it's connected to will be undefined
-	try {
-		if (nPos == nNeg) throw std::invalid_argument("Voltage source shorted");
-	} catch (std::invalid_argument& e) {
-		std::cerr << e.what() << std::endl;
-	}
 
 	// Set the voltage to 0 by default, meaning no work has to be done for
 	// DC sources
