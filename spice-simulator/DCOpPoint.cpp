@@ -84,7 +84,6 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	// Truncate the voltage vector to remove any unknown currents that were added to
 	// handle floating voltage sources
 	currSoln.conservativeResize(nNodes);
-	std::cout << currSoln << std::endl;
 
 	return currSoln;
 }
