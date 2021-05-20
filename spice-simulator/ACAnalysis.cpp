@@ -212,7 +212,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			if (npn == 1) {
 				Ic = Is * (exp(Vbe / _VT) - exp(Vbc / _VT) - (exp(Vbc / _VT) - 1) / br);
 			} else {
-				Ic = -Is * (exp(-Vbe / _VT) - exp(Vbc / _VT) - (exp(-Vbc / _VT) - 1) / br);
+				Ic = Is * (exp(-Vbe / _VT) - exp(-Vbc / _VT) - (exp(-Vbc / _VT) - 1) / br);
 			}
 
 			// Calculate gm and rbe
@@ -228,11 +228,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			comps[i] = new Resistor("Rbe", rbe, nBase, nEmitter);
 			auto iter = comps.begin();
 			iter += i;
-			if (npn == 1) {
-				comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
-			} else {
-				comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nEmitter, nBase));
-			}
+			comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
 		}
 	}
 }
@@ -284,6 +280,7 @@ VectorXcd solveAtFrequency(std::vector<Component*> comps, std::vector<int> cSInd
 	VectorXcd soln;
 	// Solve for the nodal voltages using an Eigen solver
 	soln = gMat.colPivHouseholderQr().solve(iVec);
+
 	return soln;
 }
 

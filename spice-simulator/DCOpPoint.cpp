@@ -69,7 +69,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// Iterate the analysis until the current solution is approximately the
 	// previous solution (ie convergence) or until an iteration cap is reached
-	while (!currSoln.isApprox(prevSoln) && n < 40) {
+	while (!currSoln.isApprox(prevSoln) && n < 1000) {
 		n++;
 		prevSoln = currSoln;
 		currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
@@ -77,13 +77,14 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// If we reach the iteration cap, alert the user so they know results may be
 	// inaccurate
-	if (n == 40) {
+	if (n == 1000) {
 		std::cerr << "DC operating point iteration limit exceeded" << std::endl;
 	}
 
 	// Truncate the voltage vector to remove any unknown currents that were added to
 	// handle floating voltage sources
 	currSoln.conservativeResize(nNodes);
+	std::cout << currSoln << std::endl;
 
 	return currSoln;
 }

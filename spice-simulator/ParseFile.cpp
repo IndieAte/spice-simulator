@@ -204,9 +204,22 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 				break;
 			}
 			case 'Q': {
-				if (v2[1] != v2[2] && v2.size() == 5) {
-					v1.push_back(new BJT(v2[0], v2[4], get_node_number(v2[1], n), get_node_number(v2[2], n), get_node_number(v2[3], n)));
-				} else if (v2[1] != v2[2]) {
+				if (v2.size() == 5) {
+					int nC = get_node_number(v2[1], n);
+					int nB = get_node_number(v2[2], n);
+					int nE = get_node_number(v2[3], n);
+					bool npn = (v2[4] == "NPN");
+
+					if (nC == nE || nE == nB) {
+						if (npn) v1.push_back(new Diode(v2[0], "D", nB, nC));
+						else v1.push_back(new Diode(v2[0], "D", nC, nB));
+					} else if(nC == nB) {
+						if (npn) v1.push_back(new Diode(v2[0], "D", nB, nE));
+						else v1.push_back(new Diode(v2[0], "D", nE, nB));
+					} else {
+						v1.push_back(new BJT(v2[0], v2[4], get_node_number(v2[1], n), get_node_number(v2[2], n), get_node_number(v2[3], n)));
+					}
+				} else {
 					throw std::invalid_argument("Invalid Formatting of BJT: " + v2[0]);
 				}
 				break;
