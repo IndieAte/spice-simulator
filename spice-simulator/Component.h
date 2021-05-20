@@ -223,3 +223,26 @@ public:
     double npn;
     int nodeCollector, nodeBase, nodeEmitter;
 };
+
+// MOSFET (For now only N-ch En)
+class MOSFET : public Component{
+  public:
+    MOSFET(std::string p_name, std::string p_modelName, int p_nodeDrain, int p_nodeGate, int p_nodeSource);
+
+    std::vector<int> getNodes() override;
+    std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
+    std::vector<double> getProperties() override;
+    void setProperties(std::vector<double> properties) override;
+
+    private:
+      std::string modelName;
+
+      // Large signal variables
+      double Vgs, Vds, Id;
+
+      // Component properties
+      double BD_Is, Rd, Rs, Rdon, K, Vt;
+
+      double Gd;
+      int nodeDrain, nodeGate, nodeSource;
+};

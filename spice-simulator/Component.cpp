@@ -453,3 +453,35 @@ void BJT::setProperties(std::vector<double> properties) {
 		Ie = -((Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf));
 	}
 }
+
+// =========================== MOSFET =============================
+
+MOSFET::MOSFET(std::string p_name, std::string p_modelName, int p_nodeDrain, int p_nodeGate, int p_nodeSource) :
+	Component{ p_name }, modelName{ p_modelName }, nodeDrain{ p_nodeDrain }, nodeGate{ p_nodeGate },
+	nodeSource{ p_nodeSource } {
+
+}
+
+std::vector<int> MOSFET::getNodes() {
+	std::vector<int> nodes;
+
+	nodes.push_back(nodeDrain);
+	nodes.push_back(nodeGate);
+	nodes.push_back(nodeSource);
+
+	return nodes;
+}
+
+std::complex<double> MOSFET::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
+	return 0;
+}
+
+std::vector<double> MOSFET::getProperties() {
+	std::vector<double> properties;
+
+	return properties;
+}
+
+void MOSFET::setProperties(std::vector<double> properties) {
+	
+}
