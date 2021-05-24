@@ -274,17 +274,20 @@ void Inductor::setProperties(std::vector<double> properties) {
 
 // =========================== DIODE ==============================
 
-Diode::Diode(std::string p_name, std::string p_modelName, int p_nodeAnode, int p_nodeCathode) : 
-	Component{ p_name }, nodeAnode{ p_nodeAnode }, nodeCathode{ p_nodeCathode } {
+Diode::Diode(std::string p_name, int p_nodeAnode, int p_nodeCathode, Model* p_model) : 
+	Component{ p_name }, nodeAnode{ p_nodeAnode }, nodeCathode{ p_nodeCathode }, model { p_model } {
 	
+	std::vector<double> model_values =  model->getDoubles();
+	Is = model_values[0];
+
 	Vd = 0.7;
 	
-	try {
-		if (p_modelName == "D") Is = pow(10, -12);
-		else throw std::invalid_argument("Invalide diode model: " + p_modelName);
-	} catch (std::invalid_argument& e) {
-		std::cerr << e.what() << std::endl;
-	}
+	// try {
+	// 	if (p_modelName == "D") Is = pow(10, -12);
+	// 	else throw std::invalid_argument("Invalide diode model: " + p_modelName);
+	// } catch (std::invalid_argument& e) {
+	// 	std::cerr << e.what() << std::endl;
+	// }
 
 	Gd = (Is / _VT) * exp(Vd / _VT);
 	Id = (Is * (exp(Vd / _VT) - 1)) - (Gd * Vd);
@@ -330,31 +333,41 @@ void Diode::setProperties(std::vector<double> properties) {
 
 // =========================== BJT ================================
 
-BJT::BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p_nodeBase, int p_nodeEmitter) :
-	Component{ p_name }, modelName{ p_modelName }, nodeCollector{ p_nodeCollector }, nodeBase{ p_nodeBase },
-	nodeEmitter{ p_nodeEmitter } {
+BJT::BJT(std::string p_name, int p_nodeCollector, int p_nodeBase, int p_nodeEmitter, Model* p_model) :
+	Component{ p_name }, nodeCollector{ p_nodeCollector }, nodeBase{ p_nodeBase },
+	nodeEmitter{ p_nodeEmitter }, model { p_model } {
 	
-	try {
-		if (modelName == "NPN") {
-			Vbe = 0.7;
-			Vbc = 0.7;
-			Is = pow(10, -12);
-			bf = 100;
-			br = 1;
-			npn = 1;
-		} else if (modelName == "PNP") {
-			Vbe = 0.7;
-			Vbc = 0.7;
-			Is = pow(10, -12);
-			bf = 100;
-			br = 1;
-			npn = 0;
-		} else {
-			throw std::invalid_argument("Invalid BJT model: " + modelName);
-		}
-	} catch (std::invalid_argument& e) {
-		std::cerr << e.what() << std::endl;
-	}
+	std::vector<double> model_values = model->getDoubles();
+	Vbe = 0.7;
+	Vbc = 0.7;
+	Is = model_values[0];
+	bf = model_values[1];
+	br = model_values[2];
+	vaf = model_values[3];
+	var = model_values[4];
+	npn = model_values[5];
+
+	// try {
+	// 	if (modelName == "NPN") {
+	// 		Vbe = 0.7;
+	// 		Vbc = 0.7;
+	// 		Is = pow(10, -12);
+	// 		bf = 100;
+	// 		br = 1;
+	// 		npn = 1;
+	// 	} else if (modelName == "PNP") {
+	// 		Vbe = 0.7;
+	// 		Vbc = 0.7;
+	// 		Is = pow(10, -12);
+	// 		bf = 100;
+	// 		br = 1;
+	// 		npn = 0;
+	// 	} else {
+	// 		throw std::invalid_argument("Invalid BJT model: " + modelName);
+	// 	}
+	// } catch (std::invalid_argument& e) {
+	// 	std::cerr << e.what() << std::endl;
+	// }
 
 	double zeta = exp(Vbe / _VT);
 	double xi = exp(Vbc / _VT);
