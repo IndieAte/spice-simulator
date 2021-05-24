@@ -64,21 +64,15 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// Create two voltage vectors and populate them with initial values
 	VectorXd prevSoln, currSoln;
-	prevSoln = initialGuess(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
 
-	for (int i = 0; i < nlCIndexes.size(); i++) {
-		int j = nlCIndexes[i];
-
-		updateNonlinearComponent(comps[j], prevSoln);
-	}
-
+	prevSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
 	currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
 
 	int n = 0;
 
 	// Iterate the analysis until the current solution is approximately the
 	// previous solution (ie convergence) or until an iteration cap is reached
-	while (!currSoln.isApprox(prevSoln) && n < 50) {
+	while (!currSoln.isApprox(prevSoln) && n < 100) {
 		n++;
 		prevSoln = currSoln;
 		currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
@@ -86,7 +80,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// If we reach the iteration cap, alert the user so they know results may be
 	// inaccurate
-	if (n == 50) {
+	if (n == 100) {
 		std::cerr << "DC operating point iteration limit exceeded" << std::endl;
 	}
 
@@ -97,6 +91,9 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	return currSoln;
 }
 
+// DEPRECEATED
+// This function has been made redundant by a simpler solution, but will remain here for now in case that solution
+// turns out to be inadequate
 VectorXd initialGuess(std::vector<Component*> comps, std::vector<int> cSIndexes, std::vector<int> vSIndexes,
 	std::vector<int> lCIndexes, std::vector<int> nlCIndexes, int nNodes) {
 	VectorXd initGuess;
