@@ -212,6 +212,19 @@ Model* create_model(std::vector<std::string> v) {
 			}
 		}
 		return new QModel(v[0], "Q", Is, bf, br, vaf, var, npn);
+	} else if (end_v[0] == "NMOS" || end_v[0] == "PMOS") {
+		double vto = 1, k = 0.001, nmos = 1;
+		if (end_v[0] == "PMOS") nmos = 0;
+
+		for (int i=1; i<end_v.size(); i++) {
+			std::vector<std::string> values = string_split(end_v[i],'=');
+			if (values[0] == "vto") {
+				vto = decode_value(values[1]);
+			} else if (values[0] == "k") {
+				k = decode_value(values[1]);
+			}
+		}
+		return new MModel(v[0], "M", vto, k, nmos);
 	}
 }
 
@@ -339,6 +352,13 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 					throw std::invalid_argument("Invalid Formatting of Voltage Controlled Current Source: " + line_vector[0]);
 				}
 				break;
+			}
+			case 'M': {
+				if (line_vector.size() == 5) { //!(line_vector[1] == line_vector[2] && line_vector[2] == line_vector[3]) && 
+					v1.push_back(new MOSFET(line_vector[0], get_node_number(line_vector[1], n), get_node_number(line_vector[2], n), get_node_number(line_vector[3], n), get_model(line_vector[4], "M", models)));
+				} else {
+					throw std::invalid_argument("Invalid Formatting of MOSFET: " + line_vector[0]);
+				}
 			}
 			case '.': {
 				if (line_vector[0] == ".ac") {

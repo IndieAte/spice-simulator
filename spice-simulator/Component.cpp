@@ -466,3 +466,40 @@ void BJT::setProperties(std::vector<double> properties) {
 		Ie = -((Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf));
 	}
 }
+
+MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSource, Model* model) :
+	Component { p_name }, nodeDrain { p_nodeDrain }, nodeGate { p_nodeGate }, nodeSource { p_nodeSource } {
+		std::vector<double> model_values = model->getDoubles();
+		vto = model_values[0];
+		k = model_values[1];
+		nmos = model_values[2];
+	}
+
+std::vector<int> MOSFET::getNodes() {
+	std::vector<int> nodes;
+	nodes.push_back(nodeDrain);
+	nodes.push_back(nodeGate);
+	nodes.push_back(nodeSource);
+	return nodes;
+}
+
+std::complex<double> MOSFET::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
+	return 0;
+}
+
+std::vector<double> MOSFET::getProperties() {
+	std::vector<double> properties;
+	properties.push_back(Id);
+	properties.push_back(Ig);
+	properties.push_back(Is);
+	properties.push_back(Vgs);
+	properties.push_back(Vds);
+	properties.push_back(vto);
+	properties.push_back(k);
+	properties.push_back(nmos);
+	return properties;
+}
+
+void MOSFET::setProperties(std::vector<double>) {
+
+}

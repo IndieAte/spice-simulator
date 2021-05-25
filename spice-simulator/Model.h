@@ -56,3 +56,19 @@ struct QModel : Model {
 
   double Is, bf, br, vaf, var, npn;
 };
+
+struct MModel : Model {
+  MModel(std::string p_name, std::string p_type, double p_vto,
+  double p_k, double p_nmos) : 
+    Model { p_name, p_type }, vto { p_vto }, k { p_k }, nmos { p_nmos } {}
+
+  std::vector<double> getDoubles() {
+    std::vector<double> v;
+    v.push_back(vto);
+    v.push_back(k);
+    v.push_back(nmos);
+    return v;
+  }
+
+  double vto, k, nmos;
+};

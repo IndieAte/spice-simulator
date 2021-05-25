@@ -219,11 +219,29 @@ public:
   void setProperties(std::vector<double> properties) override;
 
   private:
-    std::string modelName;
     double Vbe, Vbc, Is, bf, br, vaf, var;
     double Gcc, Gcb, Gce, Gbc, Gbb, Gbe, Gec, Geb, Gee;
     double Ic, Ib, Ie;
     double npn;
     int nodeCollector, nodeBase, nodeEmitter;
+    Model* model;
+};
+
+// MOSFET Class
+// Dervied from Compontent, implements a MOSFET
+class MOSFET : public Component {
+public: 
+  MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSource, Model* model);
+
+  std::vector<int> getNodes() override;
+  std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
+  std::vector<double> getProperties() override;
+  void setProperties(std::vector<double> properties) override;
+
+  private:
+    int nodeDrain, nodeGate, nodeSource;
+    double Vgs, Vds;
+    double Id, Ig, Is;
+    double vto, k, nmos;
     Model* model;
 };
