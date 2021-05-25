@@ -1,8 +1,9 @@
 #define _USE_MATH_DEFINES
 
 #include "ParseFile.h"
-//This function returns a vector of a string that has been split at each of a chosen character.
-//The function also detects the character inside brackets and skips the character
+
+// This function returns a vector of a string that has been split at a chosen character.
+// It only splits once even when it comes to multiple of the character in a row.
 std::vector<std::string> string_split(const std::string& s, char split) {
 	int n = 0;
 	std::vector<std::string> v;
@@ -18,38 +19,19 @@ std::vector<std::string> string_split(const std::string& s, char split) {
 	}
 	return v;
 }
-// std::vector<std::string> string_split(const std::string& s, char c) {
-// 	int n = 0;
-// 	bool skip = false;
-// 	std::vector<std::string> v;
 
-// 	v.push_back("");
-// 	for (int i = 0; i < s.length(); i++) {
-// 		if (s[i] != c) {
-// 			if (s[i] == '(') skip = true;
-// 			v[n] += s[i];
-// 		} else if (skip) {
-// 			v[n] += s[i];
-// 			skip = false;
-// 		} else if (!skip) {
-// 			v.push_back("");
-// 			n++;
-// 		}
-// 	}
-// 	return v;
-// }
-
+// This function checks if a string is entirely a string.
 bool is_number(std::string s, bool double_check) {
 	int counter = 0;
 	for (int i=0; i<s.length() - 1; i++) if (isdigit(s[counter]) || (s[counter] == '.' && double_check)) counter++;
 	return counter == s.length() - 1;
 }
 
-//This function takes a node name in the format: "N001" and returns the integer
-//number that the node refers to.
-//The function also takes a parameter n and checks if any of the nodes that are
-//parsed through the function have a higher node number and sets n to it if it
-//is higher.
+// This function takes a node name in the format: "N001" and returns the integer
+// number that the node refers to.
+// The function also takes a parameter n and checks if any of the nodes that are
+// parsed through the function have a higher node number and sets n to it if it
+// is higher.
 int get_node_number(const std::string& s, int& n) {
 	try {
 		if (s.length() > 1) {
@@ -71,7 +53,7 @@ int get_node_number(const std::string& s, int& n) {
 	}
 }
 
-//Get value from integer and multiplier
+// This function gets a numerical value from a string containing a number and multiplier.
 double decode_value(std::string s) {
 	std::string end = "";
 	int counter = s.length() - 1;
@@ -112,34 +94,27 @@ double decode_value(std::string s) {
 	}
 }
 
-//Get Amplitude and phase from AC String
+// This function removes the AC and brackets from the amplitude and phase inputs.
 std::vector<double> decode_ac(std::string a, std::string p) {
-	// if (s.length() >= 7) {
 		a.erase(0,3);
 		p.erase(p.length()-1,1);
-		// std::vector<std::string> v1 = string_split(s,' ');
-		
-		// if (v1.size() == 2) {
-			std::vector<double> v2;
-			v2.push_back(decode_value(a));
-			v2.push_back(decode_value(p));
-			return v2;
-		// } else {
-			// throw std::invalid_argument("Invalid Value: " + s);
-		// }
-	// } else {
-	// 	throw std::invalid_argument("Invalid Value: " + s);
-	// }
+		std::vector<double> v2;
+		v2.push_back(decode_value(a));
+		v2.push_back(decode_value(p));
+		return v2;
 }
 
+// This function converts degrees to radians.
 double degrees_to_radians(double d) {
 	return (d * M_PI)/180;
 }
 
+// This function converts radians to degrees.
 double radians_to_degrees(double d) {
 	return (d * 180) / M_PI;
 }
 
+// This function converts a sweep into its numerical value.
 double decode_sweep(std::string sweep) {
 	if (sweep == "dec") {
 		return 10;
@@ -152,6 +127,7 @@ double decode_sweep(std::string sweep) {
 	}
 }
 
+// This function returns a vector of what is inside a set of brackets split at the spaces.
 std::vector<std::string> open_brackets(std::string s) {
 	std::vector<std::string> v;
 	v.push_back("");
@@ -173,6 +149,8 @@ std::vector<std::string> open_brackets(std::string s) {
 	return v;
 }
 
+// This function takes a vector and index and returns a string corrosponding to the concatenation
+// of the index provided of the vector and the rest of the vector elements after the index.
 std::string get_final_elements(int index, std::vector<std::string> v) {
 	std::string s = "";
 	for (int i=index; i<v.size(); i++) {
@@ -181,6 +159,9 @@ std::string get_final_elements(int index, std::vector<std::string> v) {
 	return s;
 }
 
+// This function generates a model for a specified component from a vector of the command line .model split at spaces.
+// From this it will return a model of default values for parameters that are not specified
+// and values that are specified will be set to the value provided.
 Model* create_model(std::vector<std::string> v) {
 	std::vector<std::string> end_v = open_brackets(get_final_elements(1,v));
 
@@ -228,6 +209,9 @@ Model* create_model(std::vector<std::string> v) {
 	}
 }
 
+// This function checks if a there is a model already specified with the same name and component type
+// as were passed into it. If there is no model that had been specified from the .cir file, then it will
+// return the default model for the component type.
 Model* get_model(std::string model_name, std::string model_type, std::vector<Model*> models) {
 	for (int i=0; i<models.size(); i++) {
 		std::vector<std::string> strings = models[i]->getStrings();
@@ -240,19 +224,19 @@ Model* get_model(std::string model_name, std::string model_type, std::vector<Mod
 	return create_model(tmp);
 }
 
-//This function takes a file and returns a vector of Component pointers.
+// This function takes a file and returns a vector of Component pointers that are specified by
+// the .cir file.
 std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& command) {
 	std::vector<Component*> v1;
 	std::string tmp;
 
-	//Here the function iterates over each line and makes a component if necessary
-	//with the data provided in the line.
-
+	// This creates a vector of a vector with each element being a vector of each line split at spaces.
 	std::vector<std::vector<std::string>> v2;
 	while (std::getline(infile, tmp)) {
 		v2.push_back(string_split(tmp,' '));	
 	}
 
+	// This creates a vector of models which have been specified by the .cir file.
 	std::vector<Model*> models;
 	for (int i=0; i<v2.size(); i++) {
 		std::vector<std::string> line_vector = v2[i];
@@ -262,6 +246,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 		}
 	}
 
+	// This adds each component to the vector of components.
 	for (int i=0; i<v2.size(); i++) {
 		std::vector<std::string> line_vector = v2[i];
 		try {
