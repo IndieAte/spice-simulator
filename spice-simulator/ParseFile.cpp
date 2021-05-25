@@ -96,12 +96,12 @@ double decode_value(std::string s) {
 
 // This function removes the AC and brackets from the amplitude and phase inputs.
 std::vector<double> decode_ac(std::string a, std::string p) {
-		a.erase(0,3);
-		p.erase(p.length()-1,1);
-		std::vector<double> v2;
-		v2.push_back(decode_value(a));
-		v2.push_back(decode_value(p));
-		return v2;
+	a.erase(0,3);
+	p.erase(p.length()-1,1);
+	std::vector<double> v2;
+	v2.push_back(decode_value(a));
+	v2.push_back(decode_value(p));
+	return v2;
 }
 
 // This function converts degrees to radians.
