@@ -9,5 +9,7 @@ R2 N003 N004 200k
 C1 N004 N005 1u
 V2 N005 0 AC(1 0)
 
-.ac dec 200 10 100k
+.ac dec 5 1 20
+.model diode D (Is=1n)
+.model mos NMOS (k=2m)
 .end
