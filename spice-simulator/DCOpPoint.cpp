@@ -2,6 +2,8 @@
 
 using namespace Eigen;
 
+VectorXd initialGuess(std::vector<Component*> comps, std::vector<int> cSIndexes, std::vector<int> vSIndexes,
+	std::vector<int> lCIndexes, std::vector<int> nlCIndexes, int nNodes);
 VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std::vector<int> vSIndexes,
 	std::vector<int> lCIndexes, std::vector<int> nlCIndexes, int nNodes);
 void linearComponentHandler(Component* comp, MatrixXd& gMat);
@@ -62,6 +64,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// Create two voltage vectors and populate them with initial values
 	VectorXd prevSoln, currSoln;
+
 	prevSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
 	currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
 
@@ -69,7 +72,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// Iterate the analysis until the current solution is approximately the
 	// previous solution (ie convergence) or until an iteration cap is reached
-	while (!currSoln.isApprox(prevSoln) && n < 1000) {
+	while (!currSoln.isApprox(prevSoln) && n < 100) {
 		n++;
 		prevSoln = currSoln;
 		currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
@@ -77,7 +80,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// If we reach the iteration cap, alert the user so they know results may be
 	// inaccurate
-	if (n == 1000) {
+	if (n == 100) {
 		std::cerr << "DC operating point iteration limit exceeded" << std::endl;
 	}
 
@@ -86,6 +89,75 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	currSoln.conservativeResize(nNodes);
 
 	return currSoln;
+}
+
+// DEPRECEATED
+// This function has been made redundant by a simpler solution, but will remain here for now in case that solution
+// turns out to be inadequate
+VectorXd initialGuess(std::vector<Component*> comps, std::vector<int> cSIndexes, std::vector<int> vSIndexes,
+	std::vector<int> lCIndexes, std::vector<int> nlCIndexes, int nNodes) {
+	VectorXd initGuess;
+
+	for (int i = 0; i < nlCIndexes.size(); i++) {
+		int j = nlCIndexes[i];
+		Component* c = comps[j];
+		std::vector<int> nodes = c->getNodes();
+
+		if (typeid(*c) == typeid(Diode)) {
+			int nA = nodes[0];
+			int nC = nodes[1];
+
+			comps[j] = new DCVoltageSource("VD", 0.7, nA, nC);
+		} else if (typeid(*c) == typeid(BJT)) {
+			int nC = nodes[0];
+			int nB = nodes[1];
+			int nE = nodes[2];
+			std::vector<double> ppts = c->getProperties();
+			double npn = ppts[3];
+
+			if (npn == 1) {
+				comps[j] = new DCVoltageSource("VBE", 0.7, nB, nE);
+			} else {
+				comps[j] = new DCVoltageSource("VEB", 0.7, nE, nB);
+			}
+		}
+	}
+
+	cSIndexes.clear();
+	vSIndexes.clear();
+	lCIndexes.clear();
+	nlCIndexes.clear();
+	std::vector<int> vSTmp;
+
+	for (int i = 0; i < comps.size(); i++) {
+		Component* c = comps[i];
+
+		if (typeid(*c) == typeid(ACCurrentSource) || typeid(*c) == typeid(DCCurrentSource) ||
+			typeid(*c) == typeid(VoltageControlledCurrentSource)) {
+			cSIndexes.push_back(i);
+		} else if (typeid(*c) == typeid(DCVoltageSource)) {
+			std::vector<double> ppts = c->getProperties();
+			if (ppts[0] != 0) {
+				vSTmp.push_back(i);
+			} else {
+				vSIndexes.push_back(i);
+			}
+		} else if (typeid(*c) == typeid(Inductor) || typeid(*c) == typeid(ACVoltageSource)) {
+			vSIndexes.push_back(i);
+		} else if (typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT)) {
+			nlCIndexes.push_back(i);
+		} else {
+			lCIndexes.push_back(i);
+		}
+	}
+	for (int i = 0; i < vSTmp.size(); i++) {
+		vSIndexes.push_back(vSTmp[i]);
+	}
+
+	initGuess = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
+	initGuess.conservativeResize(nNodes);
+
+	return initGuess;
 }
 
 /* Function iterate

@@ -324,6 +324,8 @@ void Diode::setProperties(std::vector<double> properties) {
 	// at index 0
 	Vd = properties[0];
 
+	if (Vd > 1) Vd = 1;
+
 	Gd = (Is / _VT) * exp(Vd / _VT);
 	Id = (Is * (exp(Vd / _VT) - 1)) - (Gd * Vd);
 }
@@ -427,6 +429,9 @@ void BJT::setProperties(std::vector<double> properties) {
 		Vbe = -properties[0];
 		Vbc = -properties[1];
 	}
+
+	if (Vbe > 1) Vbe = 1;
+	if (Vbc > 1) Vbc = 1;
 
 	double zeta = exp(Vbe / _VT);
 	double xi = exp(Vbc / _VT);
