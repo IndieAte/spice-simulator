@@ -178,7 +178,14 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 
 			// Calculate the small signal resistance of the diode via Vd (from the DC operating point)
 			// and then the current through the diode
-			double Vd = vVec(nAnode) - vVec(nCathode);
+			double Vd;
+			if (nAnode != -1 && nCathode != -1) {
+				Vd = vVec(nAnode) - vVec(nCathode);
+			} else if (nAnode == -1) {
+				Vd = -vVec(nCathode);
+			} else {
+				Vd = vVec(nAnode);
+			}
 			double I = Is * (exp(Vd / _VT) - 1);
 			double rd = _VT / I;
 
