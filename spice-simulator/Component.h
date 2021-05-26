@@ -219,7 +219,9 @@ public:
   void setProperties(std::vector<double> properties) override;
 
   private:
-    double Vbe, Vbc, Is, bf, br, vaf, var;
+    void updateConductancesAndCurrents();
+
+    double Vbe, Vbc, Is, bf, br, Vaf, Var;
     double Gcc, Gcb, Gce, Gbc, Gbb, Gbe, Gec, Geb, Gee;
     double Ic, Ib, Ie;
     double npn;

@@ -219,8 +219,8 @@ Model* get_model(std::string model_name, std::string model_type, std::vector<Mod
 		if (model_name == strings[0] && model_type == strings[1]) return models[i];
 	}
 	std::vector<std::string> tmp;
-	tmp.push_back(model_name);
 	tmp.push_back(model_type);
+	tmp.push_back(model_name);
 	tmp.push_back("()");
 	return create_model(tmp);
 }

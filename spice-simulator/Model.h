@@ -30,7 +30,6 @@ struct DModel : Model {
   std::vector<double> getDoubles() {
     std::vector<double> v;
     v.push_back(Is);
-    std::cout << "size: " << v.size() << std::endl;
     return v;
   }
 
