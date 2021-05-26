@@ -40,7 +40,7 @@ struct QModel : Model {
   QModel(std::string p_name, std::string p_component, double p_Is,
   double p_bf, double p_br, double p_vaf, double p_var, double p_npn) :
     Model { p_name, p_component }, Is { p_Is }, bf { p_bf }, br { p_br },
-    vaf { p_vaf }, npn { p_npn } {}
+    vaf{ p_vaf }, var{ p_var }, npn{ p_npn } {}
 
   std::vector<double> getDoubles() {
     std::vector<double> v;
