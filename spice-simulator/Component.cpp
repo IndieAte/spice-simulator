@@ -357,13 +357,13 @@ void BJT::updateConductancesAndCurrents() {
 	double xi = exp(Vbc / _VT);
 
 	Gcc = (Is / _VT) * (1 + 1 / br) * xi;
-	//Gcc += -(Is / _VT) * (Vbc / Vaf + Vbe / Var) * xi + (Is / Vaf) * (zeta - xi);
+	Gcc += -(Is / _VT) * (Vbc / Vaf + Vbe / Var) * xi + (Is / Vaf) * (zeta - xi);
 
 	Gcb = (Is / _VT) * (zeta - (1 + 1 / br) * xi);
-	//Gcb += -(Is / _VT) * (zeta - xi) * ((Vbc + _VT) / Vaf + (Vbe + _VT) / Var);
+	Gcb += -(Is / _VT) * (zeta - xi) * ((Vbc + _VT) / Vaf + (Vbe + _VT) / Var);
 
 	Gce = -(Is / _VT) * zeta;
-	//Gce += (Is / _VT) * (Vbc / Vaf + Vbe / Var) * zeta + (Is / Var) * (zeta - xi);
+	Gce += (Is / _VT) * (Vbc / Vaf + Vbe / Var) * zeta + (Is / Var) * (zeta - xi);
 
 	Gbc = -(Is / (_VT * br)) * xi;
 
@@ -372,27 +372,25 @@ void BJT::updateConductancesAndCurrents() {
 	Gbe = -(Is / (_VT * bf)) * zeta;
 
 	Gec = -(Is / _VT) * xi;
-	//Gec += (Is / _VT) * (Vbc / Vaf + Vbe / Var) * xi - (Is / Vaf) * (zeta - xi);
+	Gec += (Is / _VT) * (Vbc / Vaf + Vbe / Var) * xi - (Is / Vaf) * (zeta - xi);
 
 	Geb = -(Is / _VT) * ((1 + 1 / bf) * zeta - xi);
-	//Geb += (Is / _VT) * (zeta - xi) * ((Vbc + _VT) / Vaf + (Vbe + _VT) / Var);
+	Geb += (Is / _VT) * (zeta - xi) * ((Vbc + _VT) / Vaf + (Vbe + _VT) / Var);
 
 	Gee = (Is / _VT) * (1 + 1 / bf) * zeta;
-	//Gee += -(Is / _VT) * (Vbc / Vaf + Vbe / Var) * zeta - (Is / Var) * (zeta - xi);
+	Gee += -(Is / _VT) * (Vbc / Vaf + Vbe / Var) * zeta - (Is / Var) * (zeta - xi);
 
-	std::cout << "Vbe: " << Vbe << ", Vbc: " << Vbc << std::endl;
 	Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
-	//Ic += xi * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Var) + (Vbc * Vbc * Is) / (_VT * Vaf));
-	//Ic += -zeta * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Vaf) + (Vbe * Vbe * Is) / (_VT * Var));
-	//Ic += Is * (zeta - xi) * (Vbc / Vaf + Vbe / Var);
-	std::cout << "Ic: " << Ic << std::endl << std::endl;
+	Ic += xi * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Var) + (Vbc * Vbc * Is) / (_VT * Vaf));
+	Ic += -zeta * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Vaf) + (Vbe * Vbe * Is) / (_VT * Var));
+	Ic += Is * (zeta - xi) * (Vbc / Vaf + Vbe / Var);
 	
 	Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
 
 	Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
-	//Ie += zeta * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Vaf) + (Vbe * Vbe * Is) / (_VT * Var));
-	//Ie += -xi * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Var) + (Vbc * Vbc * Is) / (_VT * Vaf));
-	//Ie += -Is * (zeta - xi) * (Vbc / Vaf + Vbe / Var);
+	Ie += zeta * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Vaf) + (Vbe * Vbe * Is) / (_VT * Var));
+	Ie += -xi * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Var) + (Vbc * Vbc * Is) / (_VT * Vaf));
+	Ie += -Is * (zeta - xi) * (Vbc / Vaf + Vbe / Var);
 
 	if (npn == 0) {
 		Ic = -Ic;

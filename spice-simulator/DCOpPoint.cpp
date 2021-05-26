@@ -28,7 +28,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	// Initialise vectors containing indexes of various component types to
 	// give each iteration quick access
 	std::vector<int> cSIndexes, vSIndexes, lCIndexes, nlCIndexes;
-	std::vector<int> vSTmp;
+	std::vector<int> vSTmp, groundedVS;
 
 	// Iterate over comps to populate the index vectors
 	for (int i = 0; i < comps.size(); i++) {
@@ -42,7 +42,15 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 		} else if (typeid(*c) == typeid(DCVoltageSource)) {
 			std::vector<double> ppts = c->getProperties();
 			if (ppts[0] != 0) {
-				vSTmp.push_back(i);
+				std::vector<int> nodes = c->getNodes();
+				int node1 = nodes[0];
+				int node2 = nodes[1];
+
+				if (node1 == 0 || node2 == 0) {
+					groundedVS.push_back(i);
+				} else {
+					vSTmp.push_back(i);
+				}
 			} else {
 				vSIndexes.push_back(i);
 			}
@@ -60,6 +68,10 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	// sources, preventing minor errors in voltages
 	for (int i = 0; i < vSTmp.size(); i++) {
 		vSIndexes.push_back(vSTmp[i]);
+	}
+
+	for (int i = 0; i < groundedVS.size(); i++) {
+		vSIndexes.push_back(groundedVS[i]);
 	}
 
 	// Create two voltage vectors and populate them with initial values
@@ -87,8 +99,6 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	// Truncate the voltage vector to remove any unknown currents that were added to
 	// handle floating voltage sources
 	currSoln.conservativeResize(nNodes);
-
-	std::cout << currSoln << std::endl;
 
 	return currSoln;
 }
@@ -129,7 +139,7 @@ VectorXd initialGuess(std::vector<Component*> comps, std::vector<int> cSIndexes,
 	vSIndexes.clear();
 	lCIndexes.clear();
 	nlCIndexes.clear();
-	std::vector<int> vSTmp;
+	std::vector<int> vSTmp, groundedVS;
 
 	for (int i = 0; i < comps.size(); i++) {
 		Component* c = comps[i];
@@ -140,7 +150,15 @@ VectorXd initialGuess(std::vector<Component*> comps, std::vector<int> cSIndexes,
 		} else if (typeid(*c) == typeid(DCVoltageSource)) {
 			std::vector<double> ppts = c->getProperties();
 			if (ppts[0] != 0) {
-				vSTmp.push_back(i);
+				std::vector<int> nodes = c->getNodes();
+				int node1 = nodes[0];
+				int node2 = nodes[1];
+
+				if (node1 == 0 || node2 == 0) {
+					groundedVS.push_back(i);
+				} else {
+					vSTmp.push_back(i);
+				}
 			} else {
 				vSIndexes.push_back(i);
 			}
@@ -152,8 +170,13 @@ VectorXd initialGuess(std::vector<Component*> comps, std::vector<int> cSIndexes,
 			lCIndexes.push_back(i);
 		}
 	}
+
 	for (int i = 0; i < vSTmp.size(); i++) {
 		vSIndexes.push_back(vSTmp[i]);
+	}
+
+	for (int i = 0; i < groundedVS.size(); i++) {
+		vSIndexes.push_back(groundedVS[i]);
 	}
 
 	initGuess = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
@@ -210,9 +233,6 @@ VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std:
 
 	// Solve for the nodal voltages
 	VectorXd vVec = gMat.colPivHouseholderQr().solve(iVec);
-
-	std::cout << gMat << std::endl << std::endl;
-	std::cout << iVec << std::endl << std::endl;
 
 	// Loops over nonlinear components and updates their properties based on the new nodal voltages
 	for (int i = 0; i < nlCIndexes.size(); i++) {
