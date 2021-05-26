@@ -456,32 +456,62 @@ void BJT::setProperties(std::vector<double> properties) {
 
 // =========================== MOSFET =============================
 
-MOSFET::MOSFET(std::string p_name, std::string p_modelName, int p_nodeDrain, int p_nodeGate, int p_nodeSource) :
-	Component{ p_name }, modelName{ p_modelName }, nodeDrain{ p_nodeDrain }, nodeGate{ p_nodeGate },
-	nodeSource{ p_nodeSource } {
-
-}
+MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSource, Model* model) :
+    Component { p_name }, nodeDrain { p_nodeDrain }, nodeGate { p_nodeGate }, nodeSource { p_nodeSource } {
+        std::vector<double> model_values = model->getDoubles();
+        vto = model_values[0];
+        k = model_values[1];
+        nmos = model_values[2];
+    }
 
 std::vector<int> MOSFET::getNodes() {
-	std::vector<int> nodes;
-
-	nodes.push_back(nodeDrain);
-	nodes.push_back(nodeGate);
-	nodes.push_back(nodeSource);
-
-	return nodes;
+    std::vector<int> nodes;
+    nodes.push_back(nodeDrain);
+    nodes.push_back(nodeGate);
+    nodes.push_back(nodeSource);
+    return nodes;
 }
 
 std::complex<double> MOSFET::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
-	return 0;
+    return 0;
 }
 
 std::vector<double> MOSFET::getProperties() {
-	std::vector<double> properties;
-
-	return properties;
+    std::vector<double> properties;
+    properties.push_back(Id);
+    properties.push_back(Ig);
+    properties.push_back(Is);
+    properties.push_back(Vgs);
+    properties.push_back(Vds);
+    properties.push_back(vto);
+    properties.push_back(k);
+    properties.push_back(nmos);
+    return properties;
 }
 
 void MOSFET::setProperties(std::vector<double> properties) {
-	
+    if (nmos == 1) {
+        Vgs = properties[0];
+        Vds = properties[1];
+    } else {
+        Vgs = -properties[0];
+        Vds = -properties[1];
+    }
+
+    Ggs = 2 * k * Vgs;
+    Gsg = -2 * Gsg;
+
+    Gds = 2 * k * (Vgs - Vt - Vds);
+    Gsd = -Gds;
+
+    Gdg = -Gds;
+    Ggd = Gds;
+
+    Ggg = 0;
+    Gss = 0;
+    Gdd = 0;
+
+    Id = K * (2 * (Vgs - Vt) * Vds - pow(Vds,2));
+    Ig = 0;
+    Is = Id;
 }
