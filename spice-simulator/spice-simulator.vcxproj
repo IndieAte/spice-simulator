@@ -153,6 +153,7 @@
     <ClInclude Include="Command.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="DCOpPoint.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="ParseFile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

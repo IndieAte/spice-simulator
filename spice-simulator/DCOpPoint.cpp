@@ -88,6 +88,8 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	// handle floating voltage sources
 	currSoln.conservativeResize(nNodes);
 
+	std::cout << currSoln << std::endl;
+
 	return currSoln;
 }
 
@@ -208,6 +210,9 @@ VectorXd iterate(std::vector<Component*> comps, std::vector<int> cSIndexes, std:
 
 	// Solve for the nodal voltages
 	VectorXd vVec = gMat.colPivHouseholderQr().solve(iVec);
+
+	std::cout << gMat << std::endl << std::endl;
+	std::cout << iVec << std::endl << std::endl;
 
 	// Loops over nonlinear components and updates their properties based on the new nodal voltages
 	for (int i = 0; i < nlCIndexes.size(); i++) {
