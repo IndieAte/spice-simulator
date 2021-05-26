@@ -100,8 +100,6 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	// handle floating voltage sources
 	currSoln.conservativeResize(nNodes);
 
-	std::cout << currSoln << std::endl;
-
 	return currSoln;
 }
 
