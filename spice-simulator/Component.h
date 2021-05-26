@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "Model.h"
+
 #define _VT 0.025851997
 
 // Component Class
@@ -188,7 +190,7 @@ public:
 // Derived from Component, implements a diode [in revision]
 class Diode : public Component{
 public:
-  Diode(std::string p_name, std::string p_modelName, int p_nodeAnode, int p_nodeCathode);
+  Diode(std::string p_name, int p_nodeAnode, int p_nodeCathode, Model* model);
 
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
@@ -202,13 +204,14 @@ public:
     // Id - Current of companion model at current Vd
     double Is, Vd, Gd, Id;
     int nodeAnode, nodeCathode;
+    Model* model;
 };
 
 // BJT (both NPN and PNP) Class
 // Derived from Component, implements a NPN or PNP BJT [in revision]
 class BJT : public Component{
 public:
-  BJT(std::string p_name, std::string p_modelName, int p_nodeCollector, int p_nodeBase, int p_nodeEmitter);
+  BJT(std::string p_name, int p_nodeCollector, int p_nodeBase, int p_nodeEmitter, Model* model);
 
   std::vector<int> getNodes() override;
   std::complex<double> getConductance(int p_node1, int p_node2, double p_angularFrequency) override;
@@ -216,8 +219,9 @@ public:
   void setProperties(std::vector<double> properties) override;
 
   private:
-    std::string modelName;
-    double Vbe, Vbc, Is, bf, br;
+    void updateConductancesAndCurrents();
+
+    double Vbe, Vbc, Is, bf, br, Vaf, Var;
     double Gcc, Gcb, Gce, Gbc, Gbb, Gbe, Gec, Geb, Gee;
     double Ic, Ib, Ie;
     double npn;
