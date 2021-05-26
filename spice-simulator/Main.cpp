@@ -36,8 +36,6 @@ int main(int argc, char** argv) {
 	std::vector<Component*> components = decode_file(infile, nNodes, command);
 	infile.close();
 
-	//std::cout << runDCOpPoint(components, nNodes) << std::endl;
-
 	std::vector<Eigen::Vector3d> results;
 	std::vector<double> command_values = command->getValues();
 	if (command->type == "AC") {

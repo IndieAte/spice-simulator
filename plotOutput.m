@@ -7,17 +7,16 @@ amplitude = T{:, 2};
 phase = T{:, 3};
 
 figure;
+
+title('Transfer Function')
+
+yyaxis left;
 semilogx(frequency, amplitude);
-title('Amplitude versus Frequency');
 xlabel('Frequency / Hz');
 ylabel('Amplitude / dB');
-grid on;
-grid minor;
 
-figure;
-semilogx(frequency, phase);
-title('Phase versus Frequency');
-xlabel('Frequency / Hz');
+yyaxis right;
+semilogx(frequency, phase, 'LineStyle', '--');
 ylabel('Phase / Degrees');
 grid on;
 grid minor;
