@@ -209,6 +209,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			double Is = ppts[4];
 			double bf = ppts[5];
 			double br = ppts[6];
+			double Vaf = ppts[7];
 
 			double Vbe, Vbc, Ic;
 
@@ -237,6 +238,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			// Calculate gm and rbe
 			double gm = Ic / _VT;
 			double rbe = bf / gm;
+			double ro = Vaf / Ic;
 
 			nCollector++;
 			nBase++;
@@ -245,9 +247,8 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			// Replace the BJT in the circuit description with the small signal model
 			delete(comps[i]);
 			comps[i] = new Resistor("Rbe", rbe, nBase, nEmitter);
-			auto iter = comps.begin();
-			iter += i;
-			comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
+			comps.push_back(new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
+			comps.push_back(new Resistor("Ro", ro, nCollector, nEmitter));
 		}
 	}
 }

@@ -281,13 +281,6 @@ Diode::Diode(std::string p_name, int p_nodeAnode, int p_nodeCathode, Model* p_mo
 	Is = model_values[0];
 
 	Vd = 0.7;
-	
-	// try {
-	// 	if (p_modelName == "D") Is = pow(10, -12);
-	// 	else throw std::invalid_argument("Invalide diode model: " + p_modelName);
-	// } catch (std::invalid_argument& e) {
-	// 	std::cerr << e.what() << std::endl;
-	// }
 
 	Gd = (Is / _VT) * exp(Vd / _VT);
 	Id = (Is * (exp(Vd / _VT) - 1)) - (Gd * Vd);
@@ -432,6 +425,7 @@ std::vector<double> BJT::getProperties() {
 	properties.push_back(Is);
 	properties.push_back(bf);
 	properties.push_back(br);
+	properties.push_back(Vaf);
 
 	return properties;
 }
