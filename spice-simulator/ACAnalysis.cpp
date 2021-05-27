@@ -31,7 +31,7 @@ void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec);
 *																	  the amplitude and phase of the voltage at the output
 *																		node at a given frequency
 */
-std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFreq, int pPD,
+std::vector<std::vector<Vector3d>> runACAnalysis(int outNode, int inputSource, double startFreq, double stopFreq, int pPD,
 	std::vector<Component*> comps, int nNodes) {
 
 	// Check that the output node is actually a node in the netlist
@@ -86,7 +86,7 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 	// Initialise values for the logarithmic frequency sweep
 	double currentFreq = startFreq;
 	int n = 1;
-	std::vector<Vector3d> output;
+	std::vector<std::vector<Vector3d>> output;
 
 	while (currentFreq <= stopFreq) {
 		// Convert frequency to angular frequency
@@ -94,7 +94,15 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 
 		// Solve the circuit at the current frequency
 		VectorXcd voltageVector = solveAtFrequency(comps, cSIndexes, vSIndexes, nSIndexes, nNodes, currAngFreq);
-		output.push_back(voltageVectorToPolar(outNode, voltageVector, currentFreq));
+
+		std::vector<Vector3d> tmp;
+		tmp.push_back(voltageVectorToPolar(outNode, voltageVector, currentFreq));
+
+		std::vector<int> inputSourceNodes = comps[inputSource]->getNodes();
+		tmp.push_back(voltageVectorToPolar(inputSourceNodes[0], voltageVector, currentFreq)
+			- voltageVectorToPolar(inputSourceNodes[1], voltageVector, currentFreq));
+
+		output.push_back(tmp);
 
 		// Increment the frequency logarithmically to ensure there are pPD points per decade
 		// and that the sweep runs over the correct frequencies
@@ -123,8 +131,12 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 	Vector3d output;
 	int oNIndex = outNode - 1;
 
-	double amplitude = abs(voltVect(oNIndex));
-	double phase = arg(voltVect(oNIndex));
+	double amplitude = 0, phase = 0;
+
+	if (outNode > 0) {
+		amplitude = abs(voltVect(oNIndex));
+		phase = arg(voltVect(oNIndex));
+	}
 
 	output << amplitude, phase, freq;
 

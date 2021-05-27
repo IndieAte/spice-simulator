@@ -1,12 +1,8 @@
 * Basic Test Circuit
 
-V1 N001 0 AC(1 0)
-V2 N002 N001 3
-D1 N002 N003 diode
-R1 N003 0 5k
-M1 N003 N002 N001 mos
+V1 N001 0 AC(2 90)
+C1 N001 N002 1u
+R1 N002 0 1k
+.ac dec 10 1 100
 
-.ac dec 5 1 20
-.model diode D (Is=1n)
-.model mos NMOS (k=2m)
 .end
