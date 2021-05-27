@@ -249,6 +249,47 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			comps[i] = new Resistor("Rbe", rbe, nBase, nEmitter);
 			comps.push_back(new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
 			comps.push_back(new Resistor("Ro", ro, nCollector, nEmitter));
+
+			// Check if junction capacitances are being included
+			double Cjc0 = ppts[8];
+			double Cje0 = ppts[11];
+
+			if (npn == 0) {
+				Vbe = -Vbe;
+				Vbc = -Vbc;
+			}
+
+			if (Cjc0 != 0) {
+				double Vjc = ppts[9];
+				double Mjc = ppts[10];
+				double fc = ppts[14];
+
+				double Cjc;
+
+				if (Vbc < fc * Vjc) {
+					Cjc = Cjc0 / pow((1 - (Vbc / Vjc)), Mjc);
+				} else {
+					Cjc = (Cjc0 / pow((1 - fc), Mjc)) * (1 + ((Mjc * (Vbc - fc * Vjc)) / (Vjc * (1 - fc))));
+				}
+
+				comps.push_back(new Capacitor("Cjc", Cjc, nCollector, nBase));
+			}
+
+			if (Cje0 != 0) {
+				double Vje = ppts[12];
+				double Mje = ppts[13];
+				double fc = ppts[14];
+
+				double Cje;
+
+				if (Vbe < fc * Vje) {
+					Cje = Cje0 / pow((1 - (Vbe / Vje)), Mje);
+				} else {
+					Cje = (Cje0 / pow((1 - fc), Mje)) * (1 + ((Mje * (Vbe - fc * Vje)) / (Vje * (1 - fc))));
+				}
+
+				comps.push_back(new Capacitor("Cje", Cje, nEmitter, nBase));
+			}
 		}
 	}
 }

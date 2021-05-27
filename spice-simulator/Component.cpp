@@ -341,6 +341,13 @@ BJT::BJT(std::string p_name, int p_nodeCollector, int p_nodeBase, int p_nodeEmit
 	Vaf = model_values[3];
 	Var = model_values[4];
 	npn = model_values[5];
+	Cjc = model_values[6];
+	Vjc = model_values[7];
+	Mjc = model_values[8];
+	Cje = model_values[9];
+	Vje = model_values[10];
+	Mje = model_values[11];
+	fc = model_values[12];
 
 	updateConductancesAndCurrents();
 }
@@ -426,6 +433,13 @@ std::vector<double> BJT::getProperties() {
 	properties.push_back(bf);
 	properties.push_back(br);
 	properties.push_back(Vaf);
+	properties.push_back(Cjc);
+	properties.push_back(Vjc);
+	properties.push_back(Mjc);
+	properties.push_back(Cje);
+	properties.push_back(Vje);
+	properties.push_back(Mje);
+	properties.push_back(fc);
 
 	return properties;
 }

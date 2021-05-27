@@ -224,6 +224,7 @@ public:
     double Vbe, Vbc, Is, bf, br, Vaf, Var;
     double Gcc, Gcb, Gce, Gbc, Gbb, Gbe, Gec, Geb, Gee;
     double Ic, Ib, Ie;
+    double Cjc, Vjc, Mjc, Cje, Vje, Mje, fc;
     double npn;
     int nodeCollector, nodeBase, nodeEmitter;
     Model* model;

@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <cctype>
 #include "Component.h"
 #include "Command.h"
 #include "Model.h"

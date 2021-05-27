@@ -28,6 +28,28 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	std::vector<int> cSIndexes, vSIndexes, lCIndexes, nlCIndexes;
 	std::vector<int> vSTmp, groundedVS;
 
+	for (int i = 0; i < comps.size(); i++) {
+		Component* c = comps[i];
+
+		if (typeid(*c) == typeid(BJT)) {
+			std::vector<int> nodes = c->getNodes();
+			int nC = nodes[0];
+			int nB = nodes[1];
+			int nE = nodes[2];
+			std::vector<double> ppts = c->getProperties();
+			double npn = ppts[3];
+			double Is = ppts[4];
+
+			if (nC == nE || nE == nB) {
+				if (npn == 1) comps[i] = new Diode("QD", nB, nC, new DModel("D", "D", Is));
+				else comps[i] = new Diode("QD", nC, nB, new DModel("D", "D", Is));
+			} else if (nC == nB) {
+				if (npn == 1) comps[i] = new Diode("QD", nB, nE, new DModel("D", "D", Is));
+				else comps[i] = new Diode("QD", nE, nB, new DModel("D", "D", Is));
+			}
+		}
+	}
+
 	// Iterate over comps to populate the index vectors
 	for (int i = 0; i < comps.size(); i++) {
 		Component* c = comps[i];

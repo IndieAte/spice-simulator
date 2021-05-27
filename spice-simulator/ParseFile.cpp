@@ -154,8 +154,9 @@ std::vector<std::string> open_brackets(std::string s) {
 // of the index provided of the vector and the rest of the vector elements after the index.
 std::string get_final_elements(int index, std::vector<std::string> v) {
 	std::string s = "";
-	for (int i=index; i<v.size(); i++) {
-		s += v[i];
+	for (int i = index; i < v.size(); i++) {
+		if (i == 0) s += v[i];
+		else s += " " + v[i];
 	}
 	return s;
 }
@@ -170,18 +171,30 @@ Model* create_model(std::vector<std::string> v) {
 		double Is = pow(10,-12);
 		for (int i=1; i<end_v.size(); i++) {
 			std::vector<std::string> values = string_split(end_v[i],'=');
-			if (values[0] == "Is") {
+
+			std::transform(values[0].begin(), values[0].end(), values[0].begin(),
+				[](unsigned char c) { return std::tolower(c); });
+
+			if (values[0] == "is") {
 				Is = decode_value(values[1]);
 			}
 		}
 		return new DModel(v[0], "D", Is);
 	} else if (end_v[0] == "NPN" || end_v[0] == "PNP") {
-		double Is = pow(10,-12), bf = 100, br = 1, vaf = 100, var = 100, npn = 1;
+		double Is = pow(10, -12), bf = 100, br = 1, npn = 1;
 		if (end_v[0] == "PNP") npn = 0;
+		double vaf = 10000, var = 10000;
+		double cjc = 0, vjc = 0.75, mjc = 0.33;
+		double cje = 0, vje = 0.75, mje = 0.33;
+		double fc = 0.5;
 
-		for (int i=1; i<end_v.size(); i++) {
+		for (int i = 1; i < end_v.size(); i++) {
 			std::vector<std::string> values = string_split(end_v[i],'=');
-			if (values[0] == "Is") {
+
+			std::transform(values[0].begin(), values[0].end(), values[0].begin(),
+				[](unsigned char c) { return std::tolower(c); });
+
+			if (values[0] == "is") {
 				Is = decode_value(values[1]);
 			} else if (values[0] == "bf") {
 				bf = decode_value(values[1]);
@@ -191,15 +204,33 @@ Model* create_model(std::vector<std::string> v) {
 				vaf = decode_value(values[1]);
 			} else if (values[0] == "var") {
 				var = decode_value(values[1]);
+			} else if (values[0] == "cjc") {
+				cjc = decode_value(values[1]);
+			} else if (values[0] == "vjc") {
+				vjc = decode_value(values[1]);
+			} else if (values[0] == "mjc") {
+				mjc = decode_value(values[1]);
+			} else if (values[0] == "cje") {
+				cje = decode_value(values[1]);
+			} else if (values[0] == "vje") {
+				vje = decode_value(values[1]);
+			} else if (values[0] == "mje") {
+				mje = decode_value(values[1]);
+			} else if (values[0] == "fc") {
+				fc = decode_value(values[1]);
 			}
 		}
-		return new QModel(v[0], "Q", Is, bf, br, vaf, var, npn);
+		return new QModel(v[0], "Q", Is, bf, br, vaf, var, npn, cjc, vjc, mjc, cje, vje, mje, fc);
 	} else if (end_v[0] == "NMOS" || end_v[0] == "PMOS") {
 		double vto = 1, k = 0.001, nmos = 1;
 		if (end_v[0] == "PMOS") nmos = 0;
 
 		for (int i=1; i<end_v.size(); i++) {
 			std::vector<std::string> values = string_split(end_v[i],'=');
+
+			std::transform(values[0].begin(), values[0].end(), values[0].begin(),
+				[](unsigned char c) { return std::tolower(c); });
+
 			if (values[0] == "vto") {
 				vto = decode_value(values[1]);
 			} else if (values[0] == "k") {
@@ -317,15 +348,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 					std::vector<double> bjt_values = bjt_model->getDoubles();
 					bool npn = (bjt_values[5] == 1);
 
-					if (nC == nE || nE == nB) {
-						if (npn) v1.push_back(new Diode(line_vector[0], nB, nC, new DModel("D", "D", bjt_values[0])));
-						else v1.push_back(new Diode(line_vector[0], nC, nB, new DModel("D", "D", bjt_values[0])));
-					} else if(nC == nB) {
-						if (npn) v1.push_back(new Diode(line_vector[0], nB, nE, new DModel("D", "D", bjt_values[0])));
-						else v1.push_back(new Diode(line_vector[0], nE, nB, new DModel("D", "D", bjt_values[0])));
-					} else {
-						v1.push_back(new BJT(line_vector[0], get_node_number(line_vector[1], n), get_node_number(line_vector[2], n), get_node_number(line_vector[3], n), bjt_model));
-					}
+					v1.push_back(new BJT(line_vector[0], get_node_number(line_vector[1], n), get_node_number(line_vector[2], n), get_node_number(line_vector[3], n), bjt_model));
 				} else {
 					throw std::invalid_argument("Invalid Formatting of BJT: " + line_vector[0]);
 				}
