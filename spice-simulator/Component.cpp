@@ -345,55 +345,57 @@ BJT::BJT(std::string p_name, int p_nodeCollector, int p_nodeBase, int p_nodeEmit
 	Is = model_values[0];
 	bf = model_values[1];
 	br = model_values[2];
-	vaf = model_values[3];
-	var = model_values[4];
+	Vaf = model_values[3];
+	Var = model_values[4];
 	npn = model_values[5];
 
-	// try {
-	// 	if (modelName == "NPN") {
-	// 		Vbe = 0.7;
-	// 		Vbc = 0.7;
-	// 		Is = pow(10, -12);
-	// 		bf = 100;
-	// 		br = 1;
-	// 		npn = 1;
-	// 	} else if (modelName == "PNP") {
-	// 		Vbe = 0.7;
-	// 		Vbc = 0.7;
-	// 		Is = pow(10, -12);
-	// 		bf = 100;
-	// 		br = 1;
-	// 		npn = 0;
-	// 	} else {
-	// 		throw std::invalid_argument("Invalid BJT model: " + modelName);
-	// 	}
-	// } catch (std::invalid_argument& e) {
-	// 	std::cerr << e.what() << std::endl;
-	// }
+	updateConductancesAndCurrents();
+}
 
+void BJT::updateConductancesAndCurrents() {
 	double zeta = exp(Vbe / _VT);
 	double xi = exp(Vbc / _VT);
 
 	Gcc = (Is / _VT) * (1 + 1 / br) * xi;
+	Gcc += -(Is / _VT) * (Vbc / Vaf + Vbe / Var) * xi + (Is / Vaf) * (zeta - xi);
+
 	Gcb = (Is / _VT) * (zeta - (1 + 1 / br) * xi);
+	Gcb += -(Is / _VT) * (zeta - xi) * ((Vbc + _VT) / Vaf + (Vbe + _VT) / Var);
+
 	Gce = -(Is / _VT) * zeta;
+	Gce += (Is / _VT) * (Vbc / Vaf + Vbe / Var) * zeta + (Is / Var) * (zeta - xi);
 
 	Gbc = -(Is / (_VT * br)) * xi;
+
 	Gbb = (Is / _VT) * ((zeta / bf) + (xi / br));
+
 	Gbe = -(Is / (_VT * bf)) * zeta;
 
 	Gec = -(Is / _VT) * xi;
-	Geb = -(Is / _VT) * ((1 + 1 / bf) * zeta - xi);
-	Gee = (Is / _VT) * (1 + 1 / bf) * zeta;
+	Gec += (Is / _VT) * (Vbc / Vaf + Vbe / Var) * xi - (Is / Vaf) * (zeta - xi);
 
-	if (npn == 1) {
-		Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
-		Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
-		Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
-	} else {
-		Ic = -((Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br));
-		Ib = -((Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br));
-		Ie = -((Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf));
+	Geb = -(Is / _VT) * ((1 + 1 / bf) * zeta - xi);
+	Geb += (Is / _VT) * (zeta - xi) * ((Vbc + _VT) / Vaf + (Vbe + _VT) / Var);
+
+	Gee = (Is / _VT) * (1 + 1 / bf) * zeta;
+	Gee += -(Is / _VT) * (Vbc / Vaf + Vbe / Var) * zeta - (Is / Var) * (zeta - xi);
+
+	Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
+	Ic += xi * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Var) + (Vbc * Vbc * Is) / (_VT * Vaf));
+	Ic += -zeta * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Vaf) + (Vbe * Vbe * Is) / (_VT * Var));
+	Ic += Is * (zeta - xi) * (Vbc / Vaf + Vbe / Var);
+	
+	Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
+
+	Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
+	Ie += zeta * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Vaf) + (Vbe * Vbe * Is) / (_VT * Var));
+	Ie += -xi * ((Vbe * Is) / Var + (Vbc * Is) / Vaf + (Vbe * Vbc * Is) / (_VT * Var) + (Vbc * Vbc * Is) / (_VT * Vaf));
+	Ie += -Is * (zeta - xi) * (Vbc / Vaf + Vbe / Var);
+
+	if (npn == 0) {
+		Ic = -Ic;
+		Ib = -Ib;
+		Ie = -Ie;
 	}
 }
 
@@ -444,32 +446,10 @@ void BJT::setProperties(std::vector<double> properties) {
 	}
 
 	if (Vbe > 1) Vbe = 1;
+
 	if (Vbc > 1) Vbc = 1;
 
-	double zeta = exp(Vbe / _VT);
-	double xi = exp(Vbc / _VT);
-
-	Gcc = (Is / _VT) * (1 + 1 / br) * xi;
-	Gcb = (Is / _VT) * (zeta - (1 + 1 / br) * xi);
-	Gce = -(Is / _VT) * zeta;
-
-	Gbc = -(Is / (_VT * br)) * xi;
-	Gbb = (Is / _VT) * ((zeta / bf) + (xi / br));
-	Gbe = -(Is / (_VT * bf)) * zeta;
-
-	Gec = -(Is / _VT) * xi;
-	Geb = -(Is / _VT) * ((1 + 1 / bf) * zeta - xi);
-	Gee = (Is / _VT) * (1 + 1 / bf) * zeta;
-
-	if (npn == 1) {
-		Ic = (Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br);
-		Ib = (Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br);
-		Ie = (Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf);
-	} else {
-		Ic = -((Vbe * Is / _VT) * zeta - (Vbc * Is / _VT) * (1 + 1 / br) * xi - Is * (zeta - xi - (xi - 1) / br));
-		Ib = -((Vbe * Is / (bf * _VT)) * zeta + (Vbc * Is / (br * _VT)) * xi - Is * ((zeta - 1) / bf + (xi - 1) / br));
-		Ie = -((Vbc * Is / _VT) * xi - (Vbe * Is / _VT) * (1 + 1 / bf) * zeta + Is * (zeta - xi + (zeta - 1) / bf));
-	}
+	updateConductancesAndCurrents();
 }
 
 MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSource, Model* model) :
