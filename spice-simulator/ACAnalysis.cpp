@@ -34,15 +34,6 @@ void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec);
 std::vector<std::vector<Vector3d>> runACAnalysis(int outNode, int inputSource, double startFreq, double stopFreq, int pPD,
 	std::vector<Component*> comps, int nNodes) {
 
-	// Check that the output node is actually a node in the netlist
-	try {
-		if (outNode > nNodes) {
-			throw std::invalid_argument("Output node not in netlist");
-		}
-	} catch (std::invalid_argument& e) {
-		std::cerr << e.what() << std::endl;
-	}
-
 	// Convert the component vector to a small signal equivalent
 	convertToSmallSignal(comps, nNodes);
 
