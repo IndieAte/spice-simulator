@@ -70,5 +70,5 @@ struct MModel : Model {
     return v;
   }
 
-  double vto, k, nmos Va;
+  double vto, k, nmos, Va;
 };

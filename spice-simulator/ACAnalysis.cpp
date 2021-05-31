@@ -301,7 +301,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			comps[i] = new Resistor("Ro", ro, nDrain, nSource);
 			auto iter = comps.begin();
 			iter += i;
-			comps.insert(iter, new VoltageControlledCurrentSource("Ggs", gm, nDrain, nSource, nGate, nSource));
+			comps.insert(iter, new VoltageControlledCurrentSource("Gds", gm, nDrain, nSource, nGate, nSource));
 		}
 	}
 }
