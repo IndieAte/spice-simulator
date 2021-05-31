@@ -452,25 +452,16 @@ void BJT::setProperties(std::vector<double> properties) {
 	updateConductancesAndCurrents();
 }
 
+// =========================== MOSFET =============================
+
 MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSource, Model* model) :
 	Component { p_name }, nodeDrain { p_nodeDrain }, nodeGate { p_nodeGate }, nodeSource { p_nodeSource } {
 		std::vector<double> model_values = model->getDoubles();
 		vto = model_values[0];
 		k = model_values[1];
 		nmos = model_values[2];
+		va = model_values[3];
 	}
-}
-
-// =========================== MOSFET =============================
-
-MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSource, Model* model) :
-    Component { p_name }, nodeDrain { p_nodeDrain }, nodeGate { p_nodeGate }, nodeSource { p_nodeSource } {
-        std::vector<double> model_values = model->getDoubles();
-        vto = model_values[0];
-        k = model_values[1];
-        nmos = model_values[2];
-		Va = model_values[3];
-    }
 
 std::vector<int> MOSFET::getNodes() {
     std::vector<int> nodes;

@@ -58,17 +58,17 @@ struct QModel : Model {
 
 struct MModel : Model {
   MModel(std::string p_name, std::string p_type, double p_vto,
-  double p_k, double p_nmos) : 
-    Model { p_name, p_type }, vto { p_vto }, k { p_k }, nmos { p_nmos }, Va { p_Va } {}
+  double p_k, double p_va, double p_nmos) : 
+    Model { p_name, p_type }, vto { p_vto }, k { p_k }, nmos { p_nmos }, va { p_va } {}
 
   std::vector<double> getDoubles() {
     std::vector<double> v;
     v.push_back(vto);
     v.push_back(k);
     v.push_back(nmos);
-    v.push_back(Va);
+    v.push_back(va);
     return v;
   }
 
-  double vto, k, nmos, Va;
+  double vto, k, nmos, va;
 };

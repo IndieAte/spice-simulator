@@ -226,6 +226,7 @@ public:
     double Ic, Ib, Ie;
     double npn;
     int nodeCollector, nodeBase, nodeEmitter;
+    Model* model;
 };
 
 // MOSFET Class
@@ -243,7 +244,7 @@ public:
     int nodeDrain, nodeGate, nodeSource;
     double Vgs, Vds;
     double Id, Ig, Is;
-    double vto, k, nmos, Va;
+    double vto, k, nmos, va;
     double Gdd, Gdg, Gds, Ggg, Ggd, Ggs, Gss, Gsd, Gsg;
     Model* model;
 };

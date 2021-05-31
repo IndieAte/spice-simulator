@@ -195,7 +195,7 @@ Model* create_model(std::vector<std::string> v) {
 		}
 		return new QModel(v[0], "Q", Is, bf, br, vaf, var, npn);
 	} else if (end_v[0] == "NMOS" || end_v[0] == "PMOS") {
-		double vto = 1, k = 0.001, nmos = 1;
+		double vto = 1, k = 0.001, va = 100, nmos = 1;
 		if (end_v[0] == "PMOS") nmos = 0;
 
 		for (int i=1; i<end_v.size(); i++) {
@@ -204,9 +204,17 @@ Model* create_model(std::vector<std::string> v) {
 				vto = decode_value(values[1]);
 			} else if (values[0] == "k") {
 				k = decode_value(values[1]);
+			} else if (values[0] == "va") {
+				va = decode_value(values[1]);
 			}
 		}
-		return new MModel(v[0], "M", vto, k, nmos);
+		return new MModel(v[0], "M", vto, k, va, nmos);
+	}
+
+	try {
+		throw std::invalid_argument("Unknown Model Name: " + end_v[0]);
+	} catch (std::invalid_argument& e) {
+		std::cerr << e.what() << std::endl;
 	}
 }
 
