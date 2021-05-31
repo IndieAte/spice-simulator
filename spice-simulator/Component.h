@@ -243,7 +243,7 @@ public:
     int nodeDrain, nodeGate, nodeSource;
     double Vgs, Vds;
     double Id, Ig, Is;
-    double vto, k, nmos;
+    double vto, k, nmos, Va;
     double Gdd, Gdg, Gds, Ggg, Ggd, Ggs, Gss, Gsd, Gsg;
     Model* model;
 };

@@ -469,6 +469,7 @@ MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSo
         vto = model_values[0];
         k = model_values[1];
         nmos = model_values[2];
+		Va = model_values[3];
     }
 
 std::vector<int> MOSFET::getNodes() {
@@ -480,7 +481,16 @@ std::vector<int> MOSFET::getNodes() {
 }
 
 std::complex<double> MOSFET::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
-    return 0;
+	if (p_node1 == nodeDrain && p_node2 == nodeDrain) return Gdd;
+	else if (p_node1 == nodeDrain && p_node2 == nodeGate) return Gdg;
+	else if (p_node1 == nodeDrain && p_node2 == nodeSource) return Gds;
+	else if (p_node1 == nodeGate && p_node2 == nodeDrain) return Ggd;
+	else if (p_node1 == nodeGate && p_node2 == nodeGate) return Ggg;
+	else if (p_node1 == nodeGate && p_node2 == nodeSource) return Ggs;
+	else if (p_node1 == nodeSource && p_node2 == nodeDrain) return Gsd;
+	else if (p_node1 == nodeSource && p_node2 == nodeGate) return Geb;
+	else if (p_node1 == nodeSource && p_node2 == nodeSource) return Gee;
+	else return 0;
 }
 
 std::vector<double> MOSFET::getProperties() {
@@ -493,32 +503,57 @@ std::vector<double> MOSFET::getProperties() {
     properties.push_back(vto);
     properties.push_back(k);
     properties.push_back(nmos);
+	properties.push_back(Va);
     return properties;
 }
 
 void MOSFET::setProperties(std::vector<double> properties) {
-    if (nmos == 1) {
-        Vgs = properties[0];
-        Vds = properties[1];
-    } else {
-        Vgs = -properties[0];
-        Vds = -properties[1];
-    }
+	Vgs = properties[0];
+	Vds = properties[1];
 
-    Ggs = 2 * k * Vgs;
-    Gsg = -2 * Gsg;
+	// NMOS only
+	if (Vgs > vto) {
+		if (Vds <= Vgs - vto) {
+			// Triode
+			Ggs = 2 * k * Vgs;
+			Gsg = -2 * Gsg;
 
-    Gds = 2 * k * (Vgs - Vt - Vds);
-    Gsd = -Gds;
+			Gds = 2 * k * (Vgs - vto - Vds);
+			Gsd = -Gds;
 
-    Gdg = -Gds;
-    Ggd = Gds;
+			Gdg = -Gds;
+			Ggd = Gds;
 
-    Ggg = 0;
-    Gss = 0;
-    Gdd = 0;
+			// UPDATE THESE!!!
+			Ggg = 0;
+			Gss = 0;
+			Gdd = 0;
 
-    Id = K * (2 * (Vgs - Vt) * Vds - pow(Vds,2));
+			Id = k * (2 * (Vgs - vto) * Vds - pow(Vds,2));
+
+		} else {
+			// Saturation
+			Ggs = 2 * k * pow(Vgs - vto, 2) * (1 + Vds/Va);
+			Gsg = -Ggs;
+
+			Gds = ( k * pow(Vgs - vto, 2) ) / Va;
+			Gsd = -Gds;
+
+			Gdg = -Gds;
+			Ggd = Gds;
+
+			// UPDATE THESE!!!
+			Ggg = 0;
+			Gss = 0;
+			Gdd = 0;
+
+			Id = k * pow(Vgs - vto, 2) * (1 + Vds/Va);
+		}
+
+	} else {
+		Id = 0;
+	}
+
     Ig = 0;
     Is = Id;
 }
