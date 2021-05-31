@@ -355,16 +355,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 				}
 				case 'Q': {
 					if (line_vector.size() == 5) {
-						int nC = get_node_number(line_vector[1], n, node_count, true);
-						int nB = get_node_number(line_vector[2], n, node_count, true);
-						int nE = get_node_number(line_vector[3], n, node_count, true);
-
-						Model* bjt_model = get_model(line_vector[4], "Q", models);
-
-						std::vector<double> bjt_values = bjt_model->getDoubles();
-						bool npn = (bjt_values[5] == 1);
-
-						v1.push_back(new BJT(line_vector[0], nC, nB, nE, bjt_model));
+						v1.push_back(new BJT(line_vector[0], get_node_number(line_vector[1], n, node_count, true), get_node_number(line_vector[2], n, node_count, true), get_node_number(line_vector[3], n, node_count, true), get_model(line_vector[4], "Q", models)));
 					} else {
 						throw std::invalid_argument("Invalid Formatting of BJT: " + line_vector[0]);
 					}
