@@ -16,6 +16,10 @@ class Component {
 public:
   Component(std::string p_name) : name{ p_name } {}
 
+  std::string getName() {
+    return name;
+  }
+
   // getNodes Function
   // Implemented by each derived class, returns a vector of the integer IDs of
   // each node connected to the component

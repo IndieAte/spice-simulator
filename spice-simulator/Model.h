@@ -9,7 +9,6 @@ struct Model {
 
   virtual std::vector<double> getDoubles() {
     std::vector<double> v;
-    std::cout << "old: " << v.size() << std::endl;
     return v;
   }
   std::vector<std::string> getStrings() {
