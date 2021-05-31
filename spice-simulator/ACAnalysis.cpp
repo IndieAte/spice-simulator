@@ -190,7 +190,14 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 
 			// Calculate the small signal resistance of the diode via Vd (from the DC operating point)
 			// and then the current through the diode
-			double Vd = vVec(nAnode) - vVec(nCathode);
+			double Vd;
+			if (nAnode != -1 && nCathode != -1) {
+				Vd = vVec(nAnode) - vVec(nCathode);
+			} else if (nAnode == -1) {
+				Vd = -vVec(nCathode);
+			} else {
+				Vd = vVec(nAnode);
+			}
 			double I = Is * (exp(Vd / _VT) - 1);
 			double rd = _VT / I;
 
@@ -214,6 +221,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			double Is = ppts[4];
 			double bf = ppts[5];
 			double br = ppts[6];
+			double Vaf = ppts[7];
 
 			double Vbe, Vbc, Ic;
 
@@ -242,6 +250,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			// Calculate gm and rbe
 			double gm = Ic / _VT;
 			double rbe = bf / gm;
+			double ro = Vaf / Ic;
 
 			nCollector++;
 			nBase++;
@@ -250,9 +259,49 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			// Replace the BJT in the circuit description with the small signal model
 			delete(comps[i]);
 			comps[i] = new Resistor("Rbe", rbe, nBase, nEmitter);
-			auto iter = comps.begin();
-			iter += i;
-			comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
+			comps.push_back(new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
+			comps.push_back(new Resistor("Ro", ro, nCollector, nEmitter));
+
+			// Check if junction capacitances are being included
+			double Cjc0 = ppts[8];
+			double Cje0 = ppts[11];
+
+			if (npn == 0) {
+				Vbe = -Vbe;
+				Vbc = -Vbc;
+			}
+
+			if (Cjc0 != 0) {
+				double Vjc = ppts[9];
+				double Mjc = ppts[10];
+				double fc = ppts[14];
+
+				double Cjc;
+
+				if (Vbc < fc * Vjc) {
+					Cjc = Cjc0 / pow((1 - (Vbc / Vjc)), Mjc);
+				} else {
+					Cjc = (Cjc0 / pow((1 - fc), Mjc)) * (1 + ((Mjc * (Vbc - fc * Vjc)) / (Vjc * (1 - fc))));
+				}
+
+				comps.push_back(new Capacitor("Cjc", Cjc, nCollector, nBase));
+			}
+
+			if (Cje0 != 0) {
+				double Vje = ppts[12];
+				double Mje = ppts[13];
+				double fc = ppts[14];
+
+				double Cje;
+
+				if (Vbe < fc * Vje) {
+					Cje = Cje0 / pow((1 - (Vbe / Vje)), Mje);
+				} else {
+					Cje = (Cje0 / pow((1 - fc), Mje)) * (1 + ((Mje * (Vbe - fc * Vje)) / (Vje * (1 - fc))));
+				}
+
+				comps.push_back(new Capacitor("Cje", Cje, nEmitter, nBase));
+			}
 		}
 	}
 }

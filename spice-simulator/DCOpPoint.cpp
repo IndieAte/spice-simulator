@@ -28,6 +28,28 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 	std::vector<int> cSIndexes, vSIndexes, lCIndexes, nlCIndexes;
 	std::vector<int> vSTmp, groundedVS;
 
+	for (int i = 0; i < comps.size(); i++) {
+		Component* c = comps[i];
+
+		if (typeid(*c) == typeid(BJT)) {
+			std::vector<int> nodes = c->getNodes();
+			int nC = nodes[0];
+			int nB = nodes[1];
+			int nE = nodes[2];
+			std::vector<double> ppts = c->getProperties();
+			double npn = ppts[3];
+			double Is = ppts[4];
+
+			if (nC == nE || nE == nB) {
+				if (npn == 1) comps[i] = new Diode("QD", nB, nC, new DModel("D", "D", Is));
+				else comps[i] = new Diode("QD", nC, nB, new DModel("D", "D", Is));
+			} else if (nC == nB) {
+				if (npn == 1) comps[i] = new Diode("QD", nB, nE, new DModel("D", "D", Is));
+				else comps[i] = new Diode("QD", nE, nB, new DModel("D", "D", Is));
+			}
+		}
+	}
+
 	// Iterate over comps to populate the index vectors
 	for (int i = 0; i < comps.size(); i++) {
 		Component* c = comps[i];
@@ -82,7 +104,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// Iterate the analysis until the current solution is approximately the
 	// previous solution (ie convergence) or until an iteration cap is reached
-	while (!currSoln.isApprox(prevSoln) && n < 100) {
+	while (!currSoln.isApprox(prevSoln) && n < 1000) {
 		n++;
 		prevSoln = currSoln;
 		currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
@@ -90,7 +112,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// If we reach the iteration cap, alert the user so they know results may be
 	// inaccurate
-	if (n == 100) {
+	if (n == 1000) {
 		std::cerr << "DC operating point iteration limit exceeded" << std::endl;
 	}
 
