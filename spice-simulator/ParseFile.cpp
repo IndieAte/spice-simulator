@@ -353,22 +353,21 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 					}
 					break;
 				}
-				break;
-			}
-			case 'Q': {
-				if (line_vector.size() == 5) {
-					int nC = get_node_number(line_vector[1], n);
-					int nB = get_node_number(line_vector[2], n);
-					int nE = get_node_number(line_vector[3], n);
+				case 'Q': {
+					if (line_vector.size() == 5) {
+						int nC = get_node_number(line_vector[1], n);
+						int nB = get_node_number(line_vector[2], n);
+						int nE = get_node_number(line_vector[3], n);
 
-					Model* bjt_model = get_model(line_vector[4], "Q", models);
+						Model* bjt_model = get_model(line_vector[4], "Q", models);
 
-					std::vector<double> bjt_values = bjt_model->getDoubles();
-					bool npn = (bjt_values[5] == 1);
+						std::vector<double> bjt_values = bjt_model->getDoubles();
+						bool npn = (bjt_values[5] == 1);
 
-					v1.push_back(new BJT(line_vector[0], get_node_number(line_vector[1], n), get_node_number(line_vector[2], n), get_node_number(line_vector[3], n), bjt_model));
-				} else {
-					throw std::invalid_argument("Invalid Formatting of BJT: " + line_vector[0]);
+						v1.push_back(new BJT(line_vector[0], get_node_number(line_vector[1], n), get_node_number(line_vector[2], n), get_node_number(line_vector[3], n), bjt_model));
+					} else {
+						throw std::invalid_argument("Invalid Formatting of BJT: " + line_vector[0]);
+					}
 				}
 				case 'G': {
 					if (line_vector[1] != line_vector[2] && line_vector.size() == 6) {
@@ -386,20 +385,21 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& n, Command*& com
 					}
 				}
 				case '.': {
-				if (line_vector[0] == ".ac") {
-					if (line_vector.size() == 5) {
-						command = new ACCommand("AC", decode_sweep(line_vector[1]), decode_value(line_vector[2]), decode_value(line_vector[3]), decode_value(line_vector[4]));
-					} else {
-						throw std::invalid_argument("Invalid Formatting of AC Command");
-					}
-				} else if (line_vector[0] == ".op") {
-					if (line_vector.size() == 1) {
-						command = new OPCommand("OP");
-					} else {
-						throw std::invalid_argument("Invalid Formatting of OP Command");
+					if (line_vector[0] == ".ac") {
+						if (line_vector.size() == 5) {
+							command = new ACCommand("AC", decode_sweep(line_vector[1]), decode_value(line_vector[2]), decode_value(line_vector[3]), decode_value(line_vector[4]));
+						} else {
+							throw std::invalid_argument("Invalid Formatting of AC Command");
+						}
+					} else if (line_vector[0] == ".op") {
+						if (line_vector.size() == 1) {
+							command = new OPCommand("OP");
+						} else {
+							throw std::invalid_argument("Invalid Formatting of OP Command");
+						}
 					}
 				}
-			}
+				break;
 			}
 		} catch (std::invalid_argument& e) {
 			std::cerr << e.what() << std::endl;
