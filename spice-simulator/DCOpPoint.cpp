@@ -572,5 +572,39 @@ void updateNonlinearComponent(Component* comp, VectorXd vVec) {
 
 		// Update the BJT's values
 		comp->setProperties(ppts);
+
+	} else if (typeid(*comp) == typeid(MOSFET)) {
+		// Get the indexes of the different nodes in gMat and iVec
+		int nDi = nodes[0] - 1;
+		int nGi = nodes[1] - 1;
+		int nSi = nodes[2] - 1;
+
+		// Drain is emitter
+		// Gate is base
+		// Source is collector
+
+		double Vgs, Vds;
+
+		// Calculate Vgs and Vds depending on which, if any, nodes are ground
+		if (nGi == -1) {
+			if (nSi == -1) Vgs = 0;
+			else Vgs = -vVec(nSi);
+
+			if (nDi == -1) Vds = Vgs;
+			else Vds = vVec(nDi) - vVec(nSi);
+		} else {
+			if (nSi == -1) Vgs = vVec(nGi);
+			else Vgs = vVec(nGi) - vVec(nSi);
+
+			if (nDi == -1) Vds = vVec(nSi);
+			else Vds = vVec(nDi) - vVec(nSi);
+		}
+
+		ppts.push_back(Vgs);
+		ppts.push_back(Vds);
+
+		// Update the BJT's values
+		comp->setProperties(ppts);
+		
 	}
 }
