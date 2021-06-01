@@ -270,20 +270,18 @@ Model* get_model(std::string model_name, std::string model_type, std::vector<Mod
 // This function takes a file and returns a vector of Component pointers that are specified by
 // the .cir file.
 std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*& command, std::vector<int>& ac_source_indexes) {
-	std::vector<Component*> v1;
-	std::string tmp;
-	std::vector<int> node_count;
 
 	// This creates a vector of a vector with each element being a vector of each line split at spaces.
-	std::vector<std::vector<std::string>> v2;
+	std::string tmp;
+	std::vector<std::vector<std::string>> file_vector;
 	while (std::getline(infile, tmp)) {
-		v2.push_back(string_split(tmp,' '));	
+		file_vector.push_back(string_split(tmp,' '));	
 	}
 
 	// This creates a vector of models which have been specified by the .cir file.
 	std::vector<Model*> models;
-	for (int i=0; i<v2.size(); i++) {
-		std::vector<std::string> line_vector = v2[i];
+	for (int i=0; i<file_vector.size(); i++) {
+		std::vector<std::string> line_vector = file_vector[i];
 		if (line_vector[0] == ".model") {
 			line_vector.erase(line_vector.begin());
 			models.push_back(create_model(line_vector));
@@ -292,13 +290,15 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 
 
 	// This adds each component to the vector of components.
-	for (int i=0; i<v2.size(); i++) {
-		std::vector<std::string> line_vector = v2[i];
+	std::vector<Component*> comps;
+	std::vector<int> node_count;
+	for (int i=0; i<file_vector.size(); i++) {
+		std::vector<std::string> line_vector = file_vector[i];
 		try {
 			switch (toupper(line_vector[0][0])) {
 				case 'R': {
 					if (line_vector[1] != line_vector[2] && line_vector.size() == 4) {
-						v1.push_back(new Resistor(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
+						comps.push_back(new Resistor(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
 					} else if (line_vector[1] != line_vector[2]) {
 						throw std::invalid_argument("Invalid Formatting of Resistor: " + line_vector[0]);
 					}
@@ -306,11 +306,11 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 				}
 				case 'I': {
 					if (line_vector[1] != line_vector[2] && line_vector[3][0] == 'A' && line_vector.size() == 5) {
-						ac_source_indexes.push_back(v1.size());
+						ac_source_indexes.push_back(comps.size());
 						std::vector<double> v3 = decode_ac(line_vector[3],line_vector[4]);
-						v1.push_back(new ACCurrentSource(line_vector[0], v3[0], degrees_to_radians(v3[1]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
+						comps.push_back(new ACCurrentSource(line_vector[0], v3[0], degrees_to_radians(v3[1]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
 					} else if (line_vector[1] != line_vector[2] && line_vector.size() == 4) {
-						v1.push_back(new DCCurrentSource(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
+						comps.push_back(new DCCurrentSource(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
 					} else if (line_vector[1] != line_vector[2]) {
 						throw std::invalid_argument("Invalid Formatting of Current Source: " + line_vector[0]);
 					}
@@ -318,7 +318,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 				}
 				case 'C': {
 					if (line_vector[1] != line_vector[2] && line_vector.size() == 4) {
-						v1.push_back(new Capacitor(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
+						comps.push_back(new Capacitor(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
 					} else if (line_vector[1] != line_vector[2]) {
 						throw std::invalid_argument("Invalid Formatting of Capacitor: " + line_vector[0]);
 					}
@@ -326,7 +326,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 				}
 				case 'L': {
 					if (line_vector[1] != line_vector[2] && line_vector.size() == 4) {
-						v1.push_back(new Inductor(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
+						comps.push_back(new Inductor(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
 					} else if (line_vector[1] != line_vector[2]) {
 						throw std::invalid_argument("Invalid Formatting of Inductor: " + line_vector[0]);
 					}
@@ -334,11 +334,11 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 				}
 				case 'V': {
 					if (line_vector[1] != line_vector[2] && line_vector[3][0] == 'A' && line_vector.size() == 5) {
-						ac_source_indexes.push_back(v1.size());
+						ac_source_indexes.push_back(comps.size());
 						std::vector<double> v3 = decode_ac(line_vector[3],line_vector[4]);
-						v1.push_back(new ACVoltageSource(line_vector[0], v3[0], degrees_to_radians(v3[1]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
+						comps.push_back(new ACVoltageSource(line_vector[0], v3[0], degrees_to_radians(v3[1]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
 					} else if (line_vector[1] != line_vector[2] && line_vector.size() == 4) {
-						v1.push_back(new DCVoltageSource(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
+						comps.push_back(new DCVoltageSource(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
 					} else if (line_vector[1] != line_vector[2]) {
 						throw std::invalid_argument("Invalid Formatting of Voltage Source: " + line_vector[0]);
 					}
@@ -346,7 +346,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 				}
 				case 'D': {
 					if (line_vector[1] != line_vector[2] && line_vector.size() == 4) {
-						v1.push_back(new Diode(line_vector[0], get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true), get_model(line_vector[3], "D", models)));
+						comps.push_back(new Diode(line_vector[0], get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true), get_model(line_vector[3], "D", models)));
 					} else if (line_vector[1] != line_vector[2]) {
 						throw std::invalid_argument("Invalid Formatting of Diode: " + line_vector[0]);
 					}
@@ -354,7 +354,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 				}
 				case 'Q': {
 					if (line_vector.size() == 5) {
-						v1.push_back(new BJT(line_vector[0], get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true), get_node_number(line_vector[3], nNodes, node_count, true), get_model(line_vector[4], "Q", models)));
+						comps.push_back(new BJT(line_vector[0], get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true), get_node_number(line_vector[3], nNodes, node_count, true), get_model(line_vector[4], "Q", models)));
 					} else {
 						throw std::invalid_argument("Invalid Formatting of BJT: " + line_vector[0]);
 					}
@@ -362,15 +362,15 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 				}
 				case 'G': {
 					if (line_vector[1] != line_vector[2] && line_vector.size() == 6) {
-						v1.push_back(new VoltageControlledCurrentSource(line_vector[0], decode_value(line_vector[5]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true), get_node_number(line_vector[3], nNodes, node_count, false), get_node_number(line_vector[4], nNodes, node_count, false)));
+						comps.push_back(new VoltageControlledCurrentSource(line_vector[0], decode_value(line_vector[5]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true), get_node_number(line_vector[3], nNodes, node_count, false), get_node_number(line_vector[4], nNodes, node_count, false)));
 					} else if (line_vector[1] != line_vector[2]) {
 						throw std::invalid_argument("Invalid Formatting of Voltage Controlled Current Source: " + line_vector[0]);
 					}
 					break;
 				}
 				case 'M': {
-					if (line_vector.size() == 5) { //!(line_vector[1] == line_vector[2] && line_vector[2] == line_vector[3]) && 
-						v1.push_back(new MOSFET(line_vector[0], get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true), get_node_number(line_vector[3], nNodes, node_count, true), get_model(line_vector[4], "M", models)));
+					if (line_vector.size() == 5) {
+						comps.push_back(new MOSFET(line_vector[0], get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true), get_node_number(line_vector[3], nNodes, node_count, true), get_model(line_vector[4], "M", models)));
 					} else {
 						throw std::invalid_argument("Invalid Formatting of MOSFET: " + line_vector[0]);
 					}
@@ -407,5 +407,5 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 		}
 	}
 
-	return v1;
+	return comps;
 }
