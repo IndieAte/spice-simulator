@@ -298,7 +298,9 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 			switch (toupper(line_vector[0][0])) {
 				case 'R': {
 					if (line_vector[1] != line_vector[2] && line_vector.size() == 4) {
-						comps.push_back(new Resistor(line_vector[0], decode_value(line_vector[3]), get_node_number(line_vector[1], nNodes, node_count, true), get_node_number(line_vector[2], nNodes, node_count, true)));
+						comps.push_back(new Resistor(line_vector[0], decode_value(line_vector[3]), 
+						get_node_number(line_vector[1], nNodes, node_count, true), 
+						get_node_number(line_vector[2], nNodes, node_count, true)));
 					} else if (line_vector[1] != line_vector[2]) {
 						throw std::invalid_argument("Invalid Formatting of Resistor: " + line_vector[0]);
 					}
