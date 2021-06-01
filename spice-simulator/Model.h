@@ -11,12 +11,6 @@ struct Model {
     std::vector<double> v;
     return v;
   }
-  std::vector<std::string> getStrings() {
-    std::vector<std::string> v;
-    v.push_back(name);
-    v.push_back(component);
-    return v;
-  }
 
   std::string name;
   std::string component;

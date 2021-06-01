@@ -258,8 +258,7 @@ Model* create_model(std::vector<std::string> v) {
 // return the default model for the component type.
 Model* get_model(std::string model_name, std::string model_type, std::vector<Model*> models) {
 	for (int i=0; i<models.size(); i++) {
-		std::vector<std::string> strings = models[i]->getStrings();
-		if (model_name == strings[0] && model_type == strings[1]) return models[i];
+		if (model_name == models[i]->name && model_type == models[i]->component) return models[i];
 	}
 	std::vector<std::string> tmp;
 	tmp.push_back(model_type);
