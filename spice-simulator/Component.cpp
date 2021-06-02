@@ -461,6 +461,10 @@ MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSo
 		k = model_values[1];
 		nmos = model_values[2];
 		va = model_values[3];
+		std::vector<double> ppts;
+		ppts.push_back(0);
+		ppts.push_back(0);
+		setProperties(ppts);
 	}
 
 std::vector<int> MOSFET::getNodes() {
@@ -479,8 +483,8 @@ std::complex<double> MOSFET::getConductance(int p_node1, int p_node2, double p_a
 	else if (p_node1 == nodeGate && p_node2 == nodeGate) return Ggg;
 	else if (p_node1 == nodeGate && p_node2 == nodeSource) return Ggs;
 	else if (p_node1 == nodeSource && p_node2 == nodeDrain) return Gsd;
-	else if (p_node1 == nodeSource && p_node2 == nodeGate) return Geb;
-	else if (p_node1 == nodeSource && p_node2 == nodeSource) return Gee;
+	else if (p_node1 == nodeSource && p_node2 == nodeGate) return Gsg;
+	else if (p_node1 == nodeSource && p_node2 == nodeSource) return Gss;
 	else return 0;
 }
 
@@ -494,7 +498,7 @@ std::vector<double> MOSFET::getProperties() {
     properties.push_back(vto);
     properties.push_back(k);
     properties.push_back(nmos);
-	properties.push_back(Va);
+	properties.push_back(va);
     return properties;
 }
 
@@ -503,31 +507,31 @@ void MOSFET::setProperties(std::vector<double> properties) {
 	Vds = properties[1];
 
 	// NMOS only
-	if (Vgs > vto) {
+	if (Vgs >= vto) {
 		if (Vds <= Vgs - vto) {
 			// Triode
-			Ggs = 2 * k * Vgs;
-			Gsg = -2 * Gsg;
+			Ggs = 2 * k * Vds;
+			Gsg = -Gsg;
 
 			Gds = 2 * k * (Vgs - vto - Vds);
-			Gsd = -Gds;
+			Gsd = 2 * k * (vto - Vgs - Vds);
 
 			Gdg = -Gds;
 			Ggd = Gds;
 
 			// UPDATE THESE!!!
-			Ggg = 0;
+			Ggg = 2 * k * Vds;
 			Gss = 0;
 			Gdd = 0;
 
-			Id = k * (2 * (Vgs - vto) * Vds - pow(Vds,2));
+			Id = k * ((2 * (Vgs - vto) * Vds) - pow(Vds,2));
 
 		} else {
 			// Saturation
-			Ggs = 2 * k * pow(Vgs - vto, 2) * (1 + Vds/Va);
+			Ggs = 2 * k * (Vgs - vto) * (1 + Vds/va);
 			Gsg = -Ggs;
 
-			Gds = ( k * pow(Vgs - vto, 2) ) / Va;
+			Gds = ( k * pow(Vgs - vto, 2) ) / va;
 			Gsd = -Gds;
 
 			Gdg = -Gds;
@@ -538,7 +542,7 @@ void MOSFET::setProperties(std::vector<double> properties) {
 			Gss = 0;
 			Gdd = 0;
 
-			Id = k * pow(Vgs - vto, 2) * (1 + Vds/Va);
+			Id = k * pow(Vgs - vto, 2) * (1 + Vds/va);
 		}
 
 	} else {
@@ -546,5 +550,5 @@ void MOSFET::setProperties(std::vector<double> properties) {
 	}
 
     Ig = 0;
-    Is = Id;
+	Is = -Id;
 }

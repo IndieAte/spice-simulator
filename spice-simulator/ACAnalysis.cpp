@@ -243,65 +243,65 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
 		} else if (typeid(*c) == typeid(MOSFET)) {
 			// In work
-			// Get the nodes connected to the BJT
+			// Get the nodes connected to the MOSFET
 			std::vector<int> nodes = c->getNodes();
-			int nDrain = nodes[0] - 1;
-			int nGate = nodes[1] - 1;
-			int nSource = nodes[2] - 1;
+			int nDi = nodes[0] - 1;
+			int nGi = nodes[1] - 1;
+			int nSi = nodes[2] - 1;
 		
 			// Get the relevant properties to calculate the small signal model
 			std::vector<double> ppts = c->getProperties();
-			double Ig = ppts[1];
-			double Is = ppts[2];
-			double nmos = ppts[7];
+
 			double vto = ppts[5];
 			double k = ppts[6];
-			double Va = ppts[8];
+			double nmos = ppts[7];
+			double va = ppts[8];
 
 			double Vgs, Vds, Id;
 
 			// Calculate Vgs and Vds depending on which, if any, nodes are ground
-			if (nGate == -1) {
-				if (nSource == -1) Vgs = 0;
-				else Vgs = -vVec(nSource);
+			if (nSi == -1) {
+				if (nGi == -1) Vgs = 0;
+				else Vgs = vVec(nGi);
 
-				if (nDrain == -1) Vds = Vgs;
-				else Vds = vVec(nDrain) - vVec(nSource);
-			} else {
-				if (nSource == -1) Vgs = vVec(nGate);
-				else Vgs = vVec(nGate) - vVec(nSource);
+				if (nDi == -1) Vds = 0;
+				else Vds = vVec(nDi);
+			}
+			else {
+				if (nGi == -1) Vgs = -vVec(nSi);
+				else Vgs = vVec(nGi) - vVec(nSi);
 
-				if (nDrain == -1) Vds = vVec(nSource);
-				else Vds = vVec(nDrain) - vVec(nSource);
+				if (nDi == -1) Vds = -vVec(nSi);
+				else Vds = vVec(nDi) - vVec(nSi);
 			}
 
 			// Calculate Id dependending on state of MOSFET
-			if (Vgs > vto) {
+			if (Vgs >= vto) {
 				if (Vds <= Vgs - vto) {
 					// Triode
-					Id = k * pow(Vgs - vto, 2) * (1 + Vds/Va);
+					Id = k * (2 * (Vgs - vto) * Vds - pow(Vds, 2));
 				} else {
 					// Saturation
-					Id = k * ( 2 * (Vgs - vto) * Vds - pow(Vds, 2))
+					Id = k * pow(Vgs - vto, 2) * (1 + Vds / va);
 				}
 			} else {
 				// Cut-off
 				Id = 0;
 			}
-			
-			double gm = 2 * sqrt(k * Id);
-			double ro = Va / Id;
 
-			nDrain++;
-			nGate++;
-			nSource++;
+			double gm = 2 * sqrt(k * Id);
+			double ro = va / Id;
+
+			nDi++;
+			nGi++;
+			nSi++;
 
 			// Insert small-signal MOSFET model
 			delete(comps[i]);
-			comps[i] = new Resistor("Ro", ro, nDrain, nSource);
+			comps[i] = new Resistor("Ro", ro, nDi, nSi);
 			auto iter = comps.begin();
 			iter += i;
-			comps.insert(iter, new VoltageControlledCurrentSource("Gds", gm, nDrain, nSource, nGate, nSource));
+			comps.insert(iter, new VoltageControlledCurrentSource("Gds", gm, nDi, nSi, nGi, nSi));
 		}
 	}
 }

@@ -57,7 +57,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 		// Also note that we treat inductors as 0 value voltage sources for DC operating point analysis
 		} else if (typeid(*c) == typeid(Inductor) || typeid(*c) == typeid(ACVoltageSource)) {
 			vSIndexes.push_back(i);
-		} else if (typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT)) {
+		} else if (typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT) || typeid(*c) == typeid(MOSFET)) {
 			nlCIndexes.push_back(i);
 		} else {
 			lCIndexes.push_back(i);
@@ -132,6 +132,13 @@ VectorXd initialGuess(std::vector<Component*> comps, std::vector<int> cSIndexes,
 			} else {
 				comps[j] = new DCVoltageSource("VEB", 0.7, nE, nB);
 			}
+		} else if (typeid(*c) == typeid(MOSFET)) {
+			int nD = nodes[0];
+			int nG = nodes[1];
+			int nS = nodes[2];
+
+			comps[j] = new DCVoltageSource("VGS", 0.7, nG, nS);
+			comps[j] = new DCVoltageSource("VDS", 0.7, nD, nS);
 		}
 	}
 
@@ -164,7 +171,7 @@ VectorXd initialGuess(std::vector<Component*> comps, std::vector<int> cSIndexes,
 			}
 		} else if (typeid(*c) == typeid(Inductor) || typeid(*c) == typeid(ACVoltageSource)) {
 			vSIndexes.push_back(i);
-		} else if (typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT)) {
+		} else if (typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT) || typeid(*c) == typeid(MOSFET)) {
 			nlCIndexes.push_back(i);
 		} else {
 			lCIndexes.push_back(i);
@@ -365,6 +372,42 @@ void nonlinearComponentHandler(Component* comp, MatrixXd& gMat, VectorXd& iVec) 
 			iVec(nEi) += Ie;
 			if (nC != 0) gMat(nEi, nCi) += std::real(comp->getConductance(nE, nC, 0));
 			if (nB != 0) gMat(nEi, nBi) += std::real(comp->getConductance(nE, nB, 0));
+		}
+	} else if (typeid(*comp) == typeid(MOSFET)) {
+		// Name the nodes to declutter the code
+		int nD = nodes[0];
+		int nG = nodes[1];
+		int nS = nodes[2];
+
+		// Get the indexes of the nodes in gMat and iVec
+		int nDi = nD - 1;
+		int nGi = nG - 1;
+		int nSi = nS - 1;
+
+		// Get the currents into each terminal
+		std::vector<double> ppts = comp->getProperties();
+		double Id = ppts[0];
+		double Ig = ppts[1];
+		double Is = ppts[2];
+
+		// Update gMat and iVec depending on which, if any, nodes are connected to ground
+		if (nD != 0) {
+			gMat(nDi, nDi) += std::real(comp->getConductance(nD, nD, 0));
+			iVec(nDi) += Id;
+			if (nG != 0) gMat(nDi, nGi) += std::real(comp->getConductance(nD, nG, 0));
+			if (nS != 0) gMat(nDi, nSi) += std::real(comp->getConductance(nD, nS, 0));
+		}
+		if (nG != 0) {
+			gMat(nGi, nGi) += std::real(comp->getConductance(nG, nG, 0));
+			iVec(nGi) += Ig;
+			if (nD != 0) gMat(nGi, nDi) += std::real(comp->getConductance(nG, nD, 0));
+			if (nS != 0) gMat(nGi, nSi) += std::real(comp->getConductance(nG, nS, 0));
+		}
+		if (nS != 0) {
+			gMat(nSi, nSi) += std::real(comp->getConductance(nS, nS, 0));
+			iVec(nSi) += Is;
+			if (nD != 0) gMat(nSi, nDi) += std::real(comp->getConductance(nS, nD, 0));
+			if (nG != 0) gMat(nSi, nGi) += std::real(comp->getConductance(nS, nG, 0));
 		}
 	}
 }
@@ -579,24 +622,20 @@ void updateNonlinearComponent(Component* comp, VectorXd vVec) {
 		int nGi = nodes[1] - 1;
 		int nSi = nodes[2] - 1;
 
-		// Drain is emitter
-		// Gate is base
-		// Source is collector
-
 		double Vgs, Vds;
 
 		// Calculate Vgs and Vds depending on which, if any, nodes are ground
-		if (nGi == -1) {
-			if (nSi == -1) Vgs = 0;
-			else Vgs = -vVec(nSi);
+		if (nSi == -1) {
+			if (nGi == -1) Vgs = 0;
+			else Vgs = vVec(nGi);
 
-			if (nDi == -1) Vds = Vgs;
-			else Vds = vVec(nDi) - vVec(nSi);
+			if (nDi == -1) Vds = 0;
+			else Vds = vVec(nDi);
 		} else {
-			if (nSi == -1) Vgs = vVec(nGi);
+			if (nGi == -1) Vgs = -vVec(nSi);
 			else Vgs = vVec(nGi) - vVec(nSi);
 
-			if (nDi == -1) Vds = vVec(nSi);
+			if (nDi == -1) Vds = -vVec(nSi);
 			else Vds = vVec(nDi) - vVec(nSi);
 		}
 
