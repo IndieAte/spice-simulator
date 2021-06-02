@@ -23,10 +23,6 @@ void updateNonlinearComponent(Component* comp, VectorXd vVec);
 *		VectorXd currSoln             - The node voltages once the simulation has converged
 */
 VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
-	// Initialise vectors containing indexes of various component types to
-	// give each iteration quick access
-	std::vector<int> cSIndexes, vSIndexes, lCIndexes, nlCIndexes;
-	std::vector<int> vSTmp, groundedVS;
 
 	for (int i = 0; i < comps.size(); i++) {
 		Component* c = comps[i];
@@ -49,6 +45,11 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 			}
 		}
 	}
+
+	// Initialise vectors containing indexes of various component types to
+	// give each iteration quick access
+	std::vector<int> cSIndexes, vSIndexes, lCIndexes, nlCIndexes;
+	std::vector<int> vSTmp, groundedVS;
 
 	// Iterate over comps to populate the index vectors
 	for (int i = 0; i < comps.size(); i++) {
