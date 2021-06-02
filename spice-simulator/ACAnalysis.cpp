@@ -364,32 +364,28 @@ void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq) {
 	// Get a vector of the nodes connected to comp and thus see how many terminals
 	// comp has
 	std::vector<int> nodes = comp->getNodes();
-	int nNodes = nodes.size();
 
-	// Two terminal components are the simplest and most common case
-	if (nNodes == 2) {
-		// Shorter names for the nodes connected to comp
-		int n0 = nodes[0];
-		int n1 = nodes[1];
+	// Shorter names for the nodes connected to comp
+	int n0 = nodes[0];
+	int n1 = nodes[1];
 
-		// Shorter names for the indexes within the conductance matrix
-		// of the nodes connected to comp
-		int n0i = n0 - 1;
-		int n1i = n1 - 1;
+	// Shorter names for the indexes within the conductance matrix
+	// of the nodes connected to comp
+	int n0i = n0 - 1;
+	int n1i = n1 - 1;
 
-		// Calculate the conductance of comp between it's terminals
-		std::complex<double> g = comp->getConductance(n0, n1, angFreq);
+	// Calculate the conductance of comp between it's terminals
+	std::complex<double> g = comp->getConductance(n0, n1, angFreq);
 
-		// Update the conduction matrix appropriately depending on whether either
-		// node is ground
-		if (n0 != 0 && n1 != 0) {
-			gMat(n0i, n1i) -= g;
-			gMat(n1i, n0i) -= g;
-		}
-
-		if (n0 != 0) gMat(n0i, n0i) += g;
-		if (n1 != 0) gMat(n1i, n1i) += g;
+	// Update the conduction matrix appropriately depending on whether either
+	// node is ground
+	if (n0 != 0 && n1 != 0) {
+		gMat(n0i, n1i) -= g;
+		gMat(n1i, n0i) -= g;
 	}
+
+	if (n0 != 0) gMat(n0i, n0i) += g;
+	if (n1 != 0) gMat(n1i, n1i) += g;
 }
 
 /* Function currentSourceHandler
