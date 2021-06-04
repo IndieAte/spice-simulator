@@ -10,10 +10,24 @@ int main(int argc, char** argv) {
 	try {
 		if (argc == 1) {
 			throw std::invalid_argument("Error: No input file provided");
-			infile.open("../testCircuit.cir");
-			outfilePath = "../output.csv";
 		} else if (argc == 2) {
-			infile.open(argv[1]);
+			if (std::string(argv[1]).compare("-h") != 0) {
+				std::cout << argv[1] << std::endl;
+				infile.open(argv[1]);
+				outputNode = -1;
+				outfilePath = "output.csv";
+			} else {
+				std::cout << std::endl;
+				std::cout << "There are 4 valid syntaxes to call this program:" << std::endl;
+				std::cout << "  circuit-sim INPUT_FILE_PATH" << std::endl;
+				std::cout << "  circuit-sim INPUT_FILE_PATH OUTPUT_NODE" << std::endl;
+				std::cout << "  circuit-sim INPUT_FILE_PATH OUTPUT_FILE_PATH" << std::endl;
+				std::cout << "  circuit-sim INPUT_FILE_PATH OUTPUT_NODE OUTPUT_FILE_PATH" << std::endl << std::endl;
+				std::cout << "INPUT_FILE_PATH should be the path to the input netlist (typically a .cir file)" << std::endl;
+				std::cout << "OUTPUT_NODE should be the number of the node to be treated as the output for an AC analysis, if not given you will be prompted to enter it later" << std::endl;
+				std::cout << "OUTPUT_FILE_PATH should be the path to the output .csv file, if not given the default is 'output.csv'" << std::endl;
+				return 0;
+			}
 		} else if (argc == 3) {
 			if (is_number(argv[2], false)) {
 				outputNode = std::stoi(argv[2]);

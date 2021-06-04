@@ -105,7 +105,7 @@ VectorXd runDCOpPoint(std::vector<Component*> comps, int nNodes) {
 
 	// Iterate the analysis until the current solution is approximately the
 	// previous solution (ie convergence) or until an iteration cap is reached
-	while (!currSoln.isApprox(prevSoln) && n < 1000) {
+	while (!currSoln.isApprox(prevSoln, 1e-4) && n < 1000) {
 		n++;
 		prevSoln = currSoln;
 		currSoln = iterate(comps, cSIndexes, vSIndexes, lCIndexes, nlCIndexes, nNodes);
