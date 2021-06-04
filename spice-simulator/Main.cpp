@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
 		} else if (command->type == "OP") {
 			Eigen::VectorXd results = runDCOpPoint(components, nNodes);
 			for (int i=0; i<nNodes; i++) {
-				outfile << "V(N" << std::to_string(i+1) << "): " << results(i) << std::endl;
+				outfile << "V(N" << std::to_string(i+1) << "), " << results(i) << std::endl;
 			}
 		}
 	} else {
