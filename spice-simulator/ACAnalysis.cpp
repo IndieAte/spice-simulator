@@ -159,10 +159,19 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 *		std::vector<Component*>& comps - The small signal equivalent circuit description
 */
 void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
-	// Run the DC operating point analysis
-	VectorXd vVec = runDCOpPoint(comps, nNodes);
+	bool foundNLC = false;
+	VectorXd vVec;
 
-	std::vector<int> nlcIndexes;
+	for (int i = 0; i < comps.size(); i++) {
+		Component* c = comps[i];
+
+		if ((typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT) || typeid(*c) == typeid(MOSFET)) && !foundNLC) {
+			// Run the DC operating point analysis if there are any non-linear components
+			vVec = runDCOpPoint(comps, nNodes);
+			std::cout << "Running DC Op Point Analysis" << std::endl;
+			foundNLC = true;
+		}
+	}
 
 	// Loops over all components and look for nonlinear components
 	for (int i = 0; i < comps.size(); i++) {
