@@ -168,7 +168,6 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 		if ((typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT) || typeid(*c) == typeid(MOSFET)) && !foundNLC) {
 			// Run the DC operating point analysis if there are any non-linear components
 			vVec = runDCOpPoint(comps, nNodes);
-			std::cout << "Running DC Op Point Analysis" << std::endl;
 			foundNLC = true;
 		}
 	}

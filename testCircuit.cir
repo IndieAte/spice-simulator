@@ -37,5 +37,5 @@ C1 N009 N008 470p
 .model mNPN NPN(Is=0.01p Bf=200 Br=1 Vaf=120 Var=120 Cjc=8p Cje=25p Fc=0.7)
 .model mPNP PNP(Is=0.01p Bf=200 Br=1 Vaf=120 Var=120 Cjc=8p Cje=30p Fc=0.7)
 
-.ac dec 10 100 10Meg
+.ac dec 100 100 10Meg
 .end
