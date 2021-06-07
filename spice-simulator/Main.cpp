@@ -91,15 +91,27 @@ int main(int argc, char** argv) {
 					}
 				}
 
-				int input_index;
+				int input_index = 0;
 				if (ac_source_indexes.size() > 1) {
 					std::string sources = "";
 					for (int i=0; i<ac_source_indexes.size(); i++) {
 						Component* ac_component = components[ac_source_indexes[i]];
 						sources += "\t" + std::to_string(i+1) + ": " + ac_component->getName() + "\n";
 					}
-					std::cout << "More than one AC Source provided. Please enter which one you want to take as input:\n" << sources;
-					std::cin >> input_index;
+					message = "More than one AC Source provided. Please enter which one you want to take as input:\n" + sources;
+					while (input_index == 0) {
+						std::cout << message << std::endl;
+						std::string tmp;
+						std::cin >> tmp;
+						if (is_number(tmp, false) && tmp != "0") {
+							input_index = std::stoi(tmp);
+							if (input_index > ac_source_indexes.size()) {
+								input_index = 0;
+								message = "Your input was outside the range of indexes. Please enter another.  ";
+							}
+						}
+						else message = "Please enter a valid input - the index of your input AC Source. ";
+					}
 				}
 				else input_index = ac_source_indexes[0];
 

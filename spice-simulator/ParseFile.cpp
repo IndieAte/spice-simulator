@@ -24,8 +24,8 @@ std::vector<std::string> string_split(const std::string& s, char split) {
 // It also can check if the string int or decimal
 bool is_number(std::string s, bool dec_check) {
 	int counter = 0;
-	for (int i=0; i<s.length() - 1; i++) if (isdigit(s[counter]) || (s[counter] == '.' && dec_check)) counter++;
-	return counter == s.length() - 1;
+	for (int i=0; i<s.length(); i++) if (isdigit(s[counter]) || (s[counter] == '.' && dec_check)) counter++;
+	return counter == s.length();
 }
 
 // This function takes a node name in the format: "N001" and returns the integer
