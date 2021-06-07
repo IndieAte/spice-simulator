@@ -141,11 +141,11 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 
 	if (outNode > 0) {
 		amplitude = abs(voltVect(oNIndex));
-		if (abs(std::real(voltVect(oNIndex))) < pow(10, -5) && abs(std::imag(voltVect(oNIndex))) < pow(10, -5)) {
-			phase = 0;
-		} else {
-			phase = arg(voltVect(oNIndex));
-		}
+		//if (abs(std::real(voltVect(oNIndex))) < pow(10, -5) && abs(std::imag(voltVect(oNIndex))) < pow(10, -5)) {
+		//	phase = 0;
+		//} else {
+		phase = arg(voltVect(oNIndex));
+		//}
 	}
 
 	output << amplitude, phase, freq;
