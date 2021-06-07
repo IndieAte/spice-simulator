@@ -51,25 +51,28 @@ std::vector<std::vector<Vector3d>> runACAnalysis(int outNode, int inputSource, d
 			typeid(*c) == typeid(VoltageControlledCurrentSource)) {
 			cSIndexes.push_back(i);
 
-		// Voltage sources require a little more care - we want to handle DC or 0 value voltage
-		// sources first, or otherwise there will be minor inaccuracies for voltage sources
-		// with meaningful values at AC
+		// Voltage sources require a little more care - we want to handle floating 0 valued sources first, then floating sources
+		// then grounded sources
 		} else if (typeid(*c) == typeid(ACVoltageSource)) {
 			std::vector<double> ppts = c->getProperties();
-			if (ppts[0] != 0) {
-				std::vector<int> nodes = c->getNodes();
-				int node1 = nodes[0];
-				int node2 = nodes[1];
+			std::vector<int> nodes = c->getNodes();
+			int node1 = nodes[0];
+			int node2 = nodes[1];
 
-				if (node1 == 0 || node2 == 0) {
-					groundedVS.push_back(i);
-				} else {
-					vSTmp.push_back(i);
-				}
+			if (node1 == 0 || node2 == 0) {
+				groundedVS.push_back(i);
 			} else {
-				vSIndexes.push_back(i);
+				if (ppts[0] == 0) vSIndexes.push_back(i);
+				else vSTmp.push_back(i);
 			}
 		} else if (typeid(*c) == typeid(DCVoltageSource)) {
+			std::vector<int> nodes = c->getNodes();
+			int node1 = nodes[0];
+			int node2 = nodes[1];
+
+			if (node1 == 0 || node2 == 0) {
+				groundedVS.push_back(i);
+			}
 			vSIndexes.push_back(i);
 		} else {
 			nSIndexes.push_back(i);
@@ -138,7 +141,11 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 
 	if (outNode > 0) {
 		amplitude = abs(voltVect(oNIndex));
+		//if (abs(std::real(voltVect(oNIndex))) < pow(10, -5) && abs(std::imag(voltVect(oNIndex))) < pow(10, -5)) {
+		//	phase = 0;
+		//} else {
 		phase = arg(voltVect(oNIndex));
+		//}
 	}
 
 	output << amplitude, phase, freq;
