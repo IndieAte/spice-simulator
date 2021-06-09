@@ -308,14 +308,15 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 
 				comps.push_back(new Capacitor("Cje", Cje, nEmitter, nBase));
 			}
-		} else if (typeid(*c) == typeid(MOSFET)) {
+		}
+		else if (typeid(*c) == typeid(MOSFET)) {
 			// In work
 			// Get the nodes connected to the MOSFET
 			std::vector<int> nodes = c->getNodes();
 			int nDi = nodes[0] - 1;
 			int nGi = nodes[1] - 1;
 			int nSi = nodes[2] - 1;
-		
+
 			// Get the relevant properties to calculate the small signal model
 			std::vector<double> ppts = c->getProperties();
 
@@ -347,11 +348,13 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 				if (Vds <= Vgs - vto) {
 					// Triode
 					Id = k * (2 * (Vgs - vto) * Vds - pow(Vds, 2));
-				} else {
+				}
+				else {
 					// Saturation
 					Id = k * pow(Vgs - vto, 2) * (1 + Vds / va);
 				}
-			} else {
+			}
+			else {
 				// Cut-off
 				Id = 0;
 			}
@@ -369,7 +372,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			auto iter = comps.begin();
 			iter += i;
 			comps.insert(iter, new VoltageControlledCurrentSource("Gm", gm, nDi, nSi, nGi, nSi));
-    
+		}
 	}
 }
 
