@@ -236,7 +236,7 @@ Model* create_model(std::vector<std::string> v) {
 		}
 		return new QModel(end_v[0], v[0], Is, bf, br, vaf, var, npn, cjc, vjc, mjc, cje, vje, mje, fc);
 	} else if (v[0] == "M") {
-		double vto = 1, k = 0.001, nmos = 1;
+		double vto = 2.9, k = 0.005, va = 100, nmos = 1;
 		if (end_v[0] == "PMOS") nmos = 0;
 
 		for (int i=1; i<end_v.size(); i++) {
@@ -249,9 +249,11 @@ Model* create_model(std::vector<std::string> v) {
 				vto = decode_value(values[1]);
 			} else if (values[0] == "k") {
 				k = decode_value(values[1]);
+			} else if (values[0] == "va") {
+				va = decode_value(values[1]);
 			}
 		}
-		return new MModel(end_v[0], v[0], vto, k, nmos);
+		return new MModel(end_v[0], v[0], vto, k, va, nmos);
 	}
 }
 

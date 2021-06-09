@@ -308,7 +308,68 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 
 				comps.push_back(new Capacitor("Cje", Cje, nEmitter, nBase));
 			}
-		}
+		} else if (typeid(*c) == typeid(MOSFET)) {
+			// In work
+			// Get the nodes connected to the MOSFET
+			std::vector<int> nodes = c->getNodes();
+			int nDi = nodes[0] - 1;
+			int nGi = nodes[1] - 1;
+			int nSi = nodes[2] - 1;
+		
+			// Get the relevant properties to calculate the small signal model
+			std::vector<double> ppts = c->getProperties();
+
+			double vto = ppts[5];
+			double k = ppts[6];
+			double nmos = ppts[7];
+			double va = ppts[8];
+
+			double Vgs, Vds, Id;
+
+			// Calculate Vgs and Vds depending on which, if any, nodes are ground
+			if (nSi == -1) {
+				if (nGi == -1) Vgs = 0;
+				else Vgs = vVec(nGi);
+
+				if (nDi == -1) Vds = 0;
+				else Vds = vVec(nDi);
+			}
+			else {
+				if (nGi == -1) Vgs = -vVec(nSi);
+				else Vgs = vVec(nGi) - vVec(nSi);
+
+				if (nDi == -1) Vds = -vVec(nSi);
+				else Vds = vVec(nDi) - vVec(nSi);
+			}
+
+			// Calculate Id MOSFET operating mode
+			if (Vgs >= vto) {
+				if (Vds <= Vgs - vto) {
+					// Triode
+					Id = k * (2 * (Vgs - vto) * Vds - pow(Vds, 2));
+				} else {
+					// Saturation
+					Id = k * pow(Vgs - vto, 2) * (1 + Vds / va);
+				}
+			} else {
+				// Cut-off
+				Id = 0;
+			}
+
+			double gm = 2 * sqrt(k * Id);
+			double ro = va / Id;
+
+			nDi++;
+			nGi++;
+			nSi++;
+
+			// Insert small-signal MOSFET model
+			delete(comps[i]);
+			comps[i] = new Resistor("Ro", ro, nDi, nSi);
+			auto iter = comps.begin();
+			iter += i;
+			comps.insert(iter, new VoltageControlledCurrentSource("Gm", gm, nDi, nSi, nGi, nSi));
+    
 	}
 }
 

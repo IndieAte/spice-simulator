@@ -460,39 +460,104 @@ void BJT::setProperties(std::vector<double> properties) {
 	updateConductancesAndCurrents();
 }
 
+// =========================== MOSFET =============================
+
 MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSource, Model* model) :
 	Component { p_name }, nodeDrain { p_nodeDrain }, nodeGate { p_nodeGate }, nodeSource { p_nodeSource } {
+		
 		std::vector<double> model_values = model->getDoubles();
 		vto = model_values[0];
 		k = model_values[1];
 		nmos = model_values[2];
+		va = model_values[3];
+
+		Ggd = 0;
+		Ggg = 0;
+		Ggs = 0;
+		
+		Vds = vto;
+		Vgs = vto;
+
+		std::vector<double> properties;
+		properties.push_back(Vgs);
+		properties.push_back(Vds);
+		setProperties(properties);
 	}
 
 std::vector<int> MOSFET::getNodes() {
-	std::vector<int> nodes;
-	nodes.push_back(nodeDrain);
-	nodes.push_back(nodeGate);
-	nodes.push_back(nodeSource);
-	return nodes;
+    std::vector<int> nodes;
+    nodes.push_back(nodeDrain);
+    nodes.push_back(nodeGate);
+    nodes.push_back(nodeSource);
+    return nodes;
 }
 
 std::complex<double> MOSFET::getConductance(int p_node1, int p_node2, double p_angularFrequency) {
-	return 0;
+	if (p_node1 == nodeDrain && p_node2 == nodeDrain) return Gdd;
+	else if (p_node1 == nodeDrain && p_node2 == nodeGate) return Gdg;
+	else if (p_node1 == nodeDrain && p_node2 == nodeSource) return Gds;
+	else if (p_node1 == nodeGate && p_node2 == nodeDrain) return Ggd;
+	else if (p_node1 == nodeGate && p_node2 == nodeGate) return Ggg;
+	else if (p_node1 == nodeGate && p_node2 == nodeSource) return Ggs;
+	else if (p_node1 == nodeSource && p_node2 == nodeDrain) return Gsd;
+	else if (p_node1 == nodeSource && p_node2 == nodeGate) return Gsg;
+	else if (p_node1 == nodeSource && p_node2 == nodeSource) return Gss;
+	else return 0;
 }
 
 std::vector<double> MOSFET::getProperties() {
-	std::vector<double> properties;
-	properties.push_back(Id);
-	properties.push_back(Ig);
-	properties.push_back(Is);
-	properties.push_back(Vgs);
-	properties.push_back(Vds);
-	properties.push_back(vto);
-	properties.push_back(k);
-	properties.push_back(nmos);
-	return properties;
+    std::vector<double> properties;
+    properties.push_back(Id);
+    properties.push_back(Ig);
+    properties.push_back(Is);
+    properties.push_back(Vgs);
+    properties.push_back(Vds);
+    properties.push_back(vto);
+    properties.push_back(k);
+    properties.push_back(nmos);
+	properties.push_back(va);
+    return properties;
 }
 
-void MOSFET::setProperties(std::vector<double>) {
+void MOSFET::setProperties(std::vector<double> properties) {
 
+	Vgs = properties[0];
+	Vds = properties[1];
+
+	double Gm, Go = 0;
+
+	// Calculate the values of the partial derivatives w.r.t. Vgs and Vds
+	// and the drain current of the MOSFET from Vds and Vds
+	if (Vgs >= vto && nmos || Vgs <= vto && !nmos) {
+		if (Vds <= Vgs - vto && nmos || Vds >= Vgs - vto && !nmos) {
+			// Triode
+			Gm = 2 * k * Vds;
+			Go = 2 * k * (Vgs - vto - Vds);
+			Id = - (k * (2 * (Vgs - vto)*Vds - pow(Vds,2)) - Gm * Vgs - Go * Vds);
+		} else {
+			// Saturation
+			Gm = 2 * k * (Vgs - vto) * (1 + Vds / va);
+			Go = 2 * k * pow(Vgs - vto, 2) / va;
+			Id = - (k * pow(Vgs - vto, 2) * (1 + Vds / va) - Gm * Vgs - Go * Vds);
+		}
+	} else {
+		// Cut-off
+		Gm = 0;
+		Go = 0;
+		Id = 0;
+	}
+
+	// Update conductances
+	Gdd = + Go;
+	Gdg = + Gm;
+	Gds = - Gm - Go;
+
+	Gsd = - Go;
+	Gsg = - Gm;
+	Gss = + Gm + Go;
+
+	// Source current is the negative drain current
+	// No gate current in a MOSFET during DC operation
+	Is = -Id;
+    Ig = 0;
 }
