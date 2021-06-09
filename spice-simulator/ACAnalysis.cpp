@@ -333,7 +333,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 
 				if (nDi == -1) Vds = 0;
 				else Vds = vVec(nDi);
-			} 			else {
+			} else {
 				if (nGi == -1) Vgs = -vVec(nSi);
 				else Vgs = vVec(nGi) - vVec(nSi);
 
@@ -368,7 +368,6 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			auto iter = comps.begin();
 			iter += i;
 			comps.insert(iter, new VoltageControlledCurrentSource("Gm", gm, nDi, nSi, nGi, nSi));
-
 		}
 	}
 }
