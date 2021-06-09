@@ -195,7 +195,7 @@ Model* create_model(std::vector<std::string> v) {
 		}
 		return new QModel(v[0], "Q", Is, bf, br, vaf, var, npn);
 	} else if (end_v[0] == "NMOS" || end_v[0] == "PMOS") {
-		double vto = 2.9, k = 0.025, va = 100, nmos = 1;
+		double vto = 2.9, k = 0.005, va = 100, nmos = 1;
 		if (end_v[0] == "PMOS") nmos = 0;
 
 		for (int i=1; i<end_v.size(); i++) {

@@ -275,7 +275,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 				else Vds = vVec(nDi) - vVec(nSi);
 			}
 
-			// Calculate Id dependending on state of MOSFET
+			// Calculate Id MOSFET operating mode
 			if (Vgs >= vto) {
 				if (Vds <= Vgs - vto) {
 					// Triode
@@ -301,7 +301,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			comps[i] = new Resistor("Ro", ro, nDi, nSi);
 			auto iter = comps.begin();
 			iter += i;
-			comps.insert(iter, new VoltageControlledCurrentSource("Gds", gm, nDi, nSi, nGi, nSi));
+			comps.insert(iter, new VoltageControlledCurrentSource("Gm", gm, nDi, nSi, nGi, nSi));
 		}
 	}
 }

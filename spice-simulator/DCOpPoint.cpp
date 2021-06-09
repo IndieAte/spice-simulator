@@ -632,10 +632,10 @@ void updateNonlinearComponent(Component* comp, VectorXd vVec) {
 			if (nDi == -1) Vds = 0;
 			else Vds = vVec(nDi);
 		} else {
-			if (nGi == -1) Vgs = -vVec(nSi);
+			if (nGi == -1) Vgs = - vVec(nSi);
 			else Vgs = vVec(nGi) - vVec(nSi);
 
-			if (nDi == -1) Vds = -vVec(nSi);
+			if (nDi == -1) Vds = - vVec(nSi);
 			else Vds = vVec(nDi) - vVec(nSi);
 		}
 

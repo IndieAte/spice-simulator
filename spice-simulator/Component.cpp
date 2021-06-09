@@ -456,15 +456,24 @@ void BJT::setProperties(std::vector<double> properties) {
 
 MOSFET::MOSFET(std::string p_name, int p_nodeDrain, int p_nodeGate, int p_nodeSource, Model* model) :
 	Component { p_name }, nodeDrain { p_nodeDrain }, nodeGate { p_nodeGate }, nodeSource { p_nodeSource } {
+		
 		std::vector<double> model_values = model->getDoubles();
 		vto = model_values[0];
 		k = model_values[1];
 		nmos = model_values[2];
 		va = model_values[3];
-		std::vector<double> ppts;
-		ppts.push_back(0);
-		ppts.push_back(0);
-		setProperties(ppts);
+
+		Ggd = 0;
+		Ggg = 0;
+		Ggs = 0;
+		
+		Vds = vto;
+		Vgs = vto;
+
+		std::vector<double> properties;
+		properties.push_back(Vgs);
+		properties.push_back(Vds);
+		setProperties(properties);
 	}
 
 std::vector<int> MOSFET::getNodes() {
@@ -503,52 +512,44 @@ std::vector<double> MOSFET::getProperties() {
 }
 
 void MOSFET::setProperties(std::vector<double> properties) {
+
 	Vgs = properties[0];
 	Vds = properties[1];
 
-	// NMOS only
-	if (Vgs >= vto) {
-		if (Vds <= Vgs - vto) {
+	double Gm, Go = 0;
+
+	// Calculate the values of the partial derivatives w.r.t. Vgs and Vds
+	// and the drain current of the MOSFET from Vds and Vds
+	if (Vgs >= vto && nmos || Vgs <= vto && !nmos) {
+		if (Vds <= Vgs - vto && nmos || Vds >= Vgs - vto && !nmos) {
 			// Triode
-			Ggs = 2 * k * Vds;
-			Gsg = -Gsg;
-
-			Gds = 2 * k * (Vgs - vto - Vds);
-			Gsd = 2 * k * (vto - Vgs - Vds);
-
-			Gdg = -Gds;
-			Ggd = Gds;
-
-			// UPDATE THESE!!!
-			Ggg = 2 * k * Vds;
-			Gss = 0;
-			Gdd = 0;
-
-			Id = k * ((2 * (Vgs - vto) * Vds) - pow(Vds,2));
-
+			Gm = 2 * k * Vds;
+			Go = 2 * k * (Vgs - vto - Vds);
+			Id = - (k * (2 * (Vgs - vto)*Vds - pow(Vds,2)) - Gm * Vgs - Go * Vds);
 		} else {
 			// Saturation
-			Ggs = 2 * k * (Vgs - vto) * (1 + Vds/va);
-			Gsg = -Ggs;
-
-			Gds = ( k * pow(Vgs - vto, 2) ) / va;
-			Gsd = -Gds;
-
-			Gdg = -Gds;
-			Ggd = Gds;
-
-			// UPDATE THESE!!!
-			Ggg = 0;
-			Gss = 0;
-			Gdd = 0;
-
-			Id = k * pow(Vgs - vto, 2) * (1 + Vds/va);
+			Gm = 2 * k * (Vgs - vto) * (1 + Vds / va);
+			Go = 2 * k * pow(Vgs - vto, 2) / va;
+			Id = - (k * pow(Vgs - vto, 2) * (1 + Vds / va) - Gm * Vgs - Go * Vds);
 		}
-
 	} else {
+		// Cut-off
+		Gm = 0;
+		Go = 0;
 		Id = 0;
 	}
 
-    Ig = 0;
+	// Update conductances
+	Gdd = + Go;
+	Gdg = + Gm;
+	Gds = - Gm - Go;
+
+	Gsd = - Go;
+	Gsg = - Gm;
+	Gss = + Gm + Go;
+
+	// Source current is the negative drain current
+	// No gate current in a MOSFET during DC operation
 	Is = -Id;
+    Ig = 0;
 }
