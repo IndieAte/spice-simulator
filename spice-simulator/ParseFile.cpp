@@ -178,8 +178,9 @@ std::string get_final_elements(int index, std::vector<std::string> v) {
 // and values that are specified will be set to the value provided.
 Model* create_model(std::vector<std::string> v) {
 	std::vector<std::string> end_v = open_brackets(get_final_elements(1,v));
+	// std:: 
 
-	if (end_v[0] == "D") {
+	if (v[0] == "D") {
 		double Is = pow(10,-12);
 		for (int i=1; i<end_v.size(); i++) {
 			std::vector<std::string> values = string_split(end_v[i],'=');
@@ -191,8 +192,9 @@ Model* create_model(std::vector<std::string> v) {
 				Is = decode_value(values[1]);
 			}
 		}
-		return new DModel(v[0], "D", Is);
-	} else if (end_v[0] == "NPN" || end_v[0] == "PNP") {
+		return new DModel(end_v[0], v[0], Is);
+	} else if (v[0] == "Q") {
+	// } else if (end_v[0] == "NPN" || end_v[0] == "PNP") {
 		double Is = pow(10, -12), bf = 100, br = 1, npn = 1;
 		if (end_v[0] == "PNP") npn = 0;
 		double vaf = 10000, var = 10000;
@@ -232,8 +234,8 @@ Model* create_model(std::vector<std::string> v) {
 				fc = decode_value(values[1]);
 			}
 		}
-		return new QModel(v[0], "Q", Is, bf, br, vaf, var, npn, cjc, vjc, mjc, cje, vje, mje, fc);
-	} else if (end_v[0] == "NMOS" || end_v[0] == "PMOS") {
+		return new QModel(end_v[0], v[0], Is, bf, br, vaf, var, npn, cjc, vjc, mjc, cje, vje, mje, fc);
+	} else if (v[0] == "M") {
 		double vto = 1, k = 0.001, nmos = 1;
 		if (end_v[0] == "PMOS") nmos = 0;
 
@@ -249,22 +251,26 @@ Model* create_model(std::vector<std::string> v) {
 				k = decode_value(values[1]);
 			}
 		}
-		return new MModel(v[0], "M", vto, k, nmos);
+		return new MModel(end_v[0], v[0], vto, k, nmos);
 	}
 }
 
 // This function checks if a there is a model already specified with the same name and component type
 // as were passed into it. If there is no model that had been specified from the .cir file, then it will
 // return the default model for the component type.
-Model* get_model(std::string model_name, std::string model_type, std::vector<Model*> models) {
+Model* get_model(std::string model_name, std::string model_type, std::vector<Model*>& models) {
 	for (int i=0; i<models.size(); i++) {
 		if (model_name == models[i]->name && model_type == models[i]->component) return models[i];
 	}
+
 	std::vector<std::string> tmp;
 	tmp.push_back(model_type);
 	tmp.push_back(model_name);
 	tmp.push_back("()");
-	return create_model(tmp);
+	Model* new_model = create_model(tmp);
+	
+	models.push_back(new_model);
+	return new_model;
 }
 
 // This function takes a file and returns a vector of Component pointers that are specified by
@@ -294,6 +300,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 	std::vector<int> node_count;
 	for (int i=0; i<file_vector.size(); i++) {
 		std::vector<std::string> line_vector = file_vector[i];
+		std::cout << line_vector[0] << std::endl;
 		try {
 			switch (toupper(line_vector[0][0])) {
 				case 'R': {
