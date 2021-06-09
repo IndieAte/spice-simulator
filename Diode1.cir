@@ -1,0 +1,13 @@
+* Diode Test Circuit 1
+
+V1 N001 0 5
+V2 N002 N001 AC(3 0)
+R1 N002 N003 10k
+C1 N003 0 1n
+D1 N003 N004 testDiode
+D2 0 N004 testDiode
+R2 N004 0 5k
+
+.model testDiode D(Is=3p)
+
+.ac dec 100 10 1Meg

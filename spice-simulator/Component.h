@@ -16,6 +16,10 @@ class Component {
 public:
   Component(std::string p_name) : name{ p_name } {}
 
+  std::string getName() {
+    return name;
+  }
+
   // getNodes Function
   // Implemented by each derived class, returns a vector of the integer IDs of
   // each node connected to the component
@@ -224,6 +228,7 @@ public:
     double Vbe, Vbc, Is, bf, br, Vaf, Var;
     double Gcc, Gcb, Gce, Gbc, Gbb, Gbe, Gec, Geb, Gee;
     double Ic, Ib, Ie;
+    double Cjc, Vjc, Mjc, Cje, Vje, Mje, fc;
     double npn;
     int nodeCollector, nodeBase, nodeEmitter;
     Model* model;

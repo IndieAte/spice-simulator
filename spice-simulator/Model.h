@@ -9,13 +9,6 @@ struct Model {
 
   virtual std::vector<double> getDoubles() {
     std::vector<double> v;
-    std::cout << "old: " << v.size() << std::endl;
-    return v;
-  }
-  std::vector<std::string> getStrings() {
-    std::vector<std::string> v;
-    v.push_back(name);
-    v.push_back(component);
     return v;
   }
 
@@ -38,9 +31,12 @@ struct DModel : Model {
 
 struct QModel : Model {
   QModel(std::string p_name, std::string p_component, double p_Is,
-  double p_bf, double p_br, double p_vaf, double p_var, double p_npn) :
+  double p_bf, double p_br, double p_vaf, double p_var, double p_npn, 
+    double p_cjc, double p_vjc, double p_mjc, double p_cje, double p_vje,
+    double p_mje, double p_fc) :
     Model { p_name, p_component }, Is { p_Is }, bf { p_bf }, br { p_br },
-    vaf { p_vaf }, npn { p_npn } {}
+    vaf{ p_vaf }, var{ p_var }, npn{ p_npn }, cjc{ p_cjc }, vjc{ p_vjc },
+    mjc{ p_mjc }, cje{ p_cje }, vje{ p_vje }, mje{ p_mje }, fc{ p_fc } {}
 
   std::vector<double> getDoubles() {
     std::vector<double> v;
@@ -50,10 +46,17 @@ struct QModel : Model {
     v.push_back(vaf);
     v.push_back(var);
     v.push_back(npn);
+    v.push_back(cjc);
+    v.push_back(vjc);
+    v.push_back(mjc);
+    v.push_back(cje);
+    v.push_back(vje);
+    v.push_back(mje);
+    v.push_back(fc);
     return v;
   }
 
-  double Is, bf, br, vaf, var, npn;
+  double Is, bf, br, vaf, var, npn, cjc, vjc, mjc, cje, vje, mje, fc;
 };
 
 struct MModel : Model {

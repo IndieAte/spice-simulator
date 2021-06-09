@@ -31,17 +31,8 @@ void voltageSourceHandler(Component* comp, MatrixXcd& gMat, VectorXcd& iVec);
 *																	  the amplitude and phase of the voltage at the output
 *																		node at a given frequency
 */
-std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFreq, int pPD,
+std::vector<std::vector<Vector3d>> runACAnalysis(int outNode, int inputSource, double startFreq, double stopFreq, int pPD,
 	std::vector<Component*> comps, int nNodes) {
-
-	// Check that the output node is actually a node in the netlist
-	try {
-		if (outNode > nNodes) {
-			throw std::invalid_argument("Output node not in netlist");
-		}
-	} catch (std::invalid_argument& e) {
-		std::cerr << e.what() << std::endl;
-	}
 
 	// Convert the component vector to a small signal equivalent
 	convertToSmallSignal(comps, nNodes);
@@ -60,25 +51,28 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 			typeid(*c) == typeid(VoltageControlledCurrentSource)) {
 			cSIndexes.push_back(i);
 
-		// Voltage sources require a little more care - we want to handle DC or 0 value voltage
-		// sources first, or otherwise there will be minor inaccuracies for voltage sources
-		// with meaningful values at AC
+		// Voltage sources require a little more care - we want to handle floating 0 valued sources first, then floating sources
+		// then grounded sources
 		} else if (typeid(*c) == typeid(ACVoltageSource)) {
 			std::vector<double> ppts = c->getProperties();
-			if (ppts[0] != 0) {
-				std::vector<int> nodes = c->getNodes();
-				int node1 = nodes[0];
-				int node2 = nodes[1];
+			std::vector<int> nodes = c->getNodes();
+			int node1 = nodes[0];
+			int node2 = nodes[1];
 
-				if (node1 == 0 || node2 == 0) {
-					groundedVS.push_back(i);
-				} else {
-					vSTmp.push_back(i);
-				}
+			if (node1 == 0 || node2 == 0) {
+				groundedVS.push_back(i);
 			} else {
-				vSIndexes.push_back(i);
+				if (ppts[0] == 0) vSIndexes.push_back(i);
+				else vSTmp.push_back(i);
 			}
 		} else if (typeid(*c) == typeid(DCVoltageSource)) {
+			std::vector<int> nodes = c->getNodes();
+			int node1 = nodes[0];
+			int node2 = nodes[1];
+
+			if (node1 == 0 || node2 == 0) {
+				groundedVS.push_back(i);
+			}
 			vSIndexes.push_back(i);
 		} else {
 			nSIndexes.push_back(i);
@@ -98,7 +92,7 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 	// Initialise values for the logarithmic frequency sweep
 	double currentFreq = startFreq;
 	int n = 1;
-	std::vector<Vector3d> output;
+	std::vector<std::vector<Vector3d>> output;
 
 	while (currentFreq <= stopFreq) {
 		// Convert frequency to angular frequency
@@ -106,7 +100,15 @@ std::vector<Vector3d> runACAnalysis(int outNode, double startFreq, double stopFr
 
 		// Solve the circuit at the current frequency
 		VectorXcd voltageVector = solveAtFrequency(comps, cSIndexes, vSIndexes, nSIndexes, nNodes, currAngFreq);
-		output.push_back(voltageVectorToPolar(outNode, voltageVector, currentFreq));
+
+		std::vector<Vector3d> tmp;
+		tmp.push_back(voltageVectorToPolar(outNode, voltageVector, currentFreq));
+
+		std::vector<int> inputSourceNodes = comps[inputSource]->getNodes();
+		tmp.push_back(voltageVectorToPolar(inputSourceNodes[0], voltageVector, currentFreq)
+			- voltageVectorToPolar(inputSourceNodes[1], voltageVector, currentFreq));
+
+		output.push_back(tmp);
 
 		// Increment the frequency logarithmically to ensure there are pPD points per decade
 		// and that the sweep runs over the correct frequencies
@@ -135,8 +137,16 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 	Vector3d output;
 	int oNIndex = outNode - 1;
 
-	double amplitude = abs(voltVect(oNIndex));
-	double phase = arg(voltVect(oNIndex));
+	double amplitude = 0, phase = 0;
+
+	if (outNode > 0) {
+		amplitude = abs(voltVect(oNIndex));
+		//if (abs(std::real(voltVect(oNIndex))) < pow(10, -5) && abs(std::imag(voltVect(oNIndex))) < pow(10, -5)) {
+		//	phase = 0;
+		//} else {
+		phase = arg(voltVect(oNIndex));
+		//}
+	}
 
 	output << amplitude, phase, freq;
 
@@ -156,10 +166,18 @@ Vector3d voltageVectorToPolar(int outNode, VectorXcd voltVect, double freq) {
 *		std::vector<Component*>& comps - The small signal equivalent circuit description
 */
 void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
-	// Run the DC operating point analysis
-	VectorXd vVec = runDCOpPoint(comps, nNodes);
+	bool foundNLC = false;
+	VectorXd vVec;
 
-	std::vector<int> nlcIndexes;
+	for (int i = 0; i < comps.size(); i++) {
+		Component* c = comps[i];
+
+		if ((typeid(*c) == typeid(Diode) || typeid(*c) == typeid(BJT) || typeid(*c) == typeid(MOSFET)) && !foundNLC) {
+			// Run the DC operating point analysis if there are any non-linear components
+			vVec = runDCOpPoint(comps, nNodes);
+			foundNLC = true;
+		}
+	}
 
 	// Loops over all components and look for nonlinear components
 	for (int i = 0; i < comps.size(); i++) {
@@ -178,7 +196,14 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 
 			// Calculate the small signal resistance of the diode via Vd (from the DC operating point)
 			// and then the current through the diode
-			double Vd = vVec(nAnode) - vVec(nCathode);
+			double Vd;
+			if (nAnode != -1 && nCathode != -1) {
+				Vd = vVec(nAnode) - vVec(nCathode);
+			} else if (nAnode == -1) {
+				Vd = -vVec(nCathode);
+			} else {
+				Vd = vVec(nAnode);
+			}
 			double I = Is * (exp(Vd / _VT) - 1);
 			double rd = _VT / I;
 
@@ -202,6 +227,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			double Is = ppts[4];
 			double bf = ppts[5];
 			double br = ppts[6];
+			double Vaf = ppts[7];
 
 			double Vbe, Vbc, Ic;
 
@@ -230,6 +256,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			// Calculate gm and rbe
 			double gm = Ic / _VT;
 			double rbe = bf / gm;
+			double ro = Vaf / Ic;
 
 			nCollector++;
 			nBase++;
@@ -238,9 +265,49 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			// Replace the BJT in the circuit description with the small signal model
 			delete(comps[i]);
 			comps[i] = new Resistor("Rbe", rbe, nBase, nEmitter);
-			auto iter = comps.begin();
-			iter += i;
-			comps.insert(iter, new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
+			comps.push_back(new VoltageControlledCurrentSource("Gce", gm, nCollector, nEmitter, nBase, nEmitter));
+			comps.push_back(new Resistor("Ro", ro, nCollector, nEmitter));
+
+			// Check if junction capacitances are being included
+			double Cjc0 = ppts[8];
+			double Cje0 = ppts[11];
+
+			if (npn == 0) {
+				Vbe = -Vbe;
+				Vbc = -Vbc;
+			}
+
+			if (Cjc0 != 0) {
+				double Vjc = ppts[9];
+				double Mjc = ppts[10];
+				double fc = ppts[14];
+
+				double Cjc;
+
+				if (Vbc < fc * Vjc) {
+					Cjc = Cjc0 / pow((1 - (Vbc / Vjc)), Mjc);
+				} else {
+					Cjc = (Cjc0 / pow((1 - fc), Mjc)) * (1 + ((Mjc * (Vbc - fc * Vjc)) / (Vjc * (1 - fc))));
+				}
+
+				comps.push_back(new Capacitor("Cjc", Cjc, nCollector, nBase));
+			}
+
+			if (Cje0 != 0) {
+				double Vje = ppts[12];
+				double Mje = ppts[13];
+				double fc = ppts[14];
+
+				double Cje;
+
+				if (Vbe < fc * Vje) {
+					Cje = Cje0 / pow((1 - (Vbe / Vje)), Mje);
+				} else {
+					Cje = (Cje0 / pow((1 - fc), Mje)) * (1 + ((Mje * (Vbe - fc * Vje)) / (Vje * (1 - fc))));
+				}
+
+				comps.push_back(new Capacitor("Cje", Cje, nEmitter, nBase));
+			}
 		} else if (typeid(*c) == typeid(MOSFET)) {
 			// In work
 			// Get the nodes connected to the MOSFET
@@ -302,7 +369,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			auto iter = comps.begin();
 			iter += i;
 			comps.insert(iter, new VoltageControlledCurrentSource("Gm", gm, nDi, nSi, nGi, nSi));
-		}
+    
 	}
 }
 
@@ -373,32 +440,28 @@ void nonSourceHandler(Component* comp, MatrixXcd& gMat, double angFreq) {
 	// Get a vector of the nodes connected to comp and thus see how many terminals
 	// comp has
 	std::vector<int> nodes = comp->getNodes();
-	int nNodes = nodes.size();
 
-	// Two terminal components are the simplest and most common case
-	if (nNodes == 2) {
-		// Shorter names for the nodes connected to comp
-		int n0 = nodes[0];
-		int n1 = nodes[1];
+	// Shorter names for the nodes connected to comp
+	int n0 = nodes[0];
+	int n1 = nodes[1];
 
-		// Shorter names for the indexes within the conductance matrix
-		// of the nodes connected to comp
-		int n0i = n0 - 1;
-		int n1i = n1 - 1;
+	// Shorter names for the indexes within the conductance matrix
+	// of the nodes connected to comp
+	int n0i = n0 - 1;
+	int n1i = n1 - 1;
 
-		// Calculate the conductance of comp between it's terminals
-		std::complex<double> g = comp->getConductance(n0, n1, angFreq);
+	// Calculate the conductance of comp between it's terminals
+	std::complex<double> g = comp->getConductance(n0, n1, angFreq);
 
-		// Update the conduction matrix appropriately depending on whether either
-		// node is ground
-		if (n0 != 0 && n1 != 0) {
-			gMat(n0i, n1i) -= g;
-			gMat(n1i, n0i) -= g;
-		}
-
-		if (n0 != 0) gMat(n0i, n0i) += g;
-		if (n1 != 0) gMat(n1i, n1i) += g;
+	// Update the conduction matrix appropriately depending on whether either
+	// node is ground
+	if (n0 != 0 && n1 != 0) {
+		gMat(n0i, n1i) -= g;
+		gMat(n1i, n0i) -= g;
 	}
+
+	if (n0 != 0) gMat(n0i, n0i) += g;
+	if (n1 != 0) gMat(n1i, n1i) += g;
 }
 
 /* Function currentSourceHandler
