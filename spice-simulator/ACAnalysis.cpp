@@ -213,14 +213,14 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			delete comps[i];
 			comps[i] = new Resistor("Rd", rd, nAnode, nCathode);
 
-		// Handle replacing BJTs
+			// Handle replacing BJTs
 		} else if (typeid(*c) == typeid(BJT)) {
 			// Get the nodes connected to the BJT
 			std::vector<int> nodes = c->getNodes();
 			int nCollector = nodes[0] - 1;
 			int nBase = nodes[1] - 1;
 			int nEmitter = nodes[2] - 1;
-		
+
 			// Get the relevant properties to calculate the small signal model
 			std::vector<double> ppts = c->getProperties();
 			double npn = ppts[3];
@@ -315,7 +315,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			int nDi = nodes[0] - 1;
 			int nGi = nodes[1] - 1;
 			int nSi = nodes[2] - 1;
-		
+
 			// Get the relevant properties to calculate the small signal model
 			std::vector<double> ppts = c->getProperties();
 
@@ -333,8 +333,7 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 
 				if (nDi == -1) Vds = 0;
 				else Vds = vVec(nDi);
-			}
-			else {
+			} 			else {
 				if (nGi == -1) Vgs = -vVec(nSi);
 				else Vgs = vVec(nGi) - vVec(nSi);
 
@@ -369,7 +368,8 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 			auto iter = comps.begin();
 			iter += i;
 			comps.insert(iter, new VoltageControlledCurrentSource("Gm", gm, nDi, nSi, nGi, nSi));
-    
+
+		}
 	}
 }
 

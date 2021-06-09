@@ -179,7 +179,7 @@ std::string get_final_elements(int index, std::vector<std::string> v) {
 Model* create_model(std::vector<std::string> v) {
 	std::vector<std::string> end_v = open_brackets(get_final_elements(1,v));
 
-	if (v[0] == "D") {
+	if (end_v[0] == "D") {
 		double Is = pow(10,-12);
 		for (int i=1; i<end_v.size(); i++) {
 			std::vector<std::string> values = string_split(end_v[i],'=');
@@ -192,7 +192,7 @@ Model* create_model(std::vector<std::string> v) {
 			}
 		}
 		return new DModel(end_v[0], v[0], Is);
-	} else if (v[0] == "Q") {
+	} else if (end_v[0] == "NPN" || end_v[0] == "PNP") {
 		double Is = pow(10, -12), bf = 100, br = 1, npn = 1;
 		if (end_v[0] == "PNP") npn = 0;
 		double vaf = 10000, var = 10000;
@@ -233,7 +233,7 @@ Model* create_model(std::vector<std::string> v) {
 			}
 		}
 		return new QModel(end_v[0], v[0], Is, bf, br, vaf, var, npn, cjc, vjc, mjc, cje, vje, mje, fc);
-	} else if (v[0] == "M") {
+	} else if (end_v[0] == "NMOS" || end_v[0] == "PMOS") {
 		double vto = 2.9, k = 0.005, va = 100, nmos = 1;
 		if (end_v[0] == "PMOS") nmos = 0;
 
@@ -300,7 +300,7 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 	std::vector<int> node_count;
 	for (int i=0; i<file_vector.size(); i++) {
 		std::vector<std::string> line_vector = file_vector[i];
-		std::cout << line_vector[0] << std::endl;
+		// std::cout << line_vector[0] << std::endl;
 		try {
 			switch (toupper(line_vector[0][0])) {
 				case 'R': {
