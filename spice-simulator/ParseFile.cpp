@@ -178,7 +178,6 @@ std::string get_final_elements(int index, std::vector<std::string> v) {
 // and values that are specified will be set to the value provided.
 Model* create_model(std::vector<std::string> v) {
 	std::vector<std::string> end_v = open_brackets(get_final_elements(1,v));
-	// std:: 
 
 	if (v[0] == "D") {
 		double Is = pow(10,-12);
@@ -194,7 +193,6 @@ Model* create_model(std::vector<std::string> v) {
 		}
 		return new DModel(end_v[0], v[0], Is);
 	} else if (v[0] == "Q") {
-	// } else if (end_v[0] == "NPN" || end_v[0] == "PNP") {
 		double Is = pow(10, -12), bf = 100, br = 1, npn = 1;
 		if (end_v[0] == "PNP") npn = 0;
 		double vaf = 10000, var = 10000;
@@ -270,7 +268,7 @@ Model* get_model(std::string model_name, std::string model_type, std::vector<Mod
 	tmp.push_back(model_name);
 	tmp.push_back("()");
 	Model* new_model = create_model(tmp);
-	
+
 	models.push_back(new_model);
 	return new_model;
 }
