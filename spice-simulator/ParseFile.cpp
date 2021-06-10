@@ -263,9 +263,23 @@ Model* get_model(std::string model_name, std::string model_type, std::vector<Mod
 		if (model_name == models[i]->name && model_type == models[i]->component) return models[i];
 	}
 
+	std::cout << "No model matching: '" << model_name << "'. Creating a new default model." << std::endl;
+
 	std::vector<std::string> tmp;
-	tmp.push_back(model_type);
 	tmp.push_back(model_name);
+
+	std::string model_component;
+	if (model_type == "D") model_component = "D";
+	else if (model_type == "Q") {
+		if (model_name == "PNP") model_component = "PNP";
+		else model_component = "NPN";
+	}
+	else if (model_type == "M") {
+		if (model_name == "PMOS") model_component = "PMOS";
+		else model_component == "NMOS";
+	}
+	tmp.push_back(model_component);
+	
 	tmp.push_back("()");
 	Model* new_model = create_model(tmp);
 
