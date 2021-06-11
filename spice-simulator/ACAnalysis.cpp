@@ -341,16 +341,20 @@ void convertToSmallSignal(std::vector<Component*>& comps, int nNodes) {
 				else Vds = vVec(nDi) - vVec(nSi);
 			}
 
-			// Calculate Id MOSFET operating mode
-			if (Vgs >= vto) {
-				if (Vds <= Vgs - vto) {
+			// Calculate Id from MOSFET operating mode
+			if ((Vgs >= vto && nmos) || (Vgs <= vto && !nmos)) {
+				if ((Vds <= Vgs - vto && nmos) || (Vds >= Vgs - vto && !nmos)) {
 					// Triode
-					Id = k * (2 * (Vgs - vto) * Vds - pow(Vds, 2));
-				} else {
-					// Saturation
-					Id = k * pow(Vgs - vto, 2) * (1 + Vds / va);
+					Id = (k * (2 * (Vgs - vto) * Vds - pow(Vds, 2)));
 				}
-			} else {
+				else {
+					// Saturation
+					Id = (k * pow(Vgs - vto, 2) * (1 + Vds / va));
+
+					// Id = (k * pow(Vgs - vto, 2));
+				}
+			}
+			else {
 				// Cut-off
 				Id = 0;
 			}

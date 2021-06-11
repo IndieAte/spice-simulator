@@ -528,17 +528,23 @@ void MOSFET::setProperties(std::vector<double> properties) {
 
 	// Calculate the values of the partial derivatives w.r.t. Vgs and Vds
 	// and the drain current of the MOSFET from Vds and Vds
-	if (Vgs >= vto && nmos || Vgs <= vto && !nmos) {
-		if (Vds <= Vgs - vto && nmos || Vds >= Vgs - vto && !nmos) {
+	if ((Vgs >= vto && nmos) || (Vgs <= vto && !nmos)) {
+		if ((Vds <= Vgs - vto && nmos) || (Vds >= Vgs - vto && !nmos)) {
 			// Triode
 			Gm = 2 * k * Vds;
 			Go = 2 * k * (Vgs - vto - Vds);
-			Id = - (k * (2 * (Vgs - vto)*Vds - pow(Vds,2)) - Gm * Vgs - Go * Vds);
+			Id = - ((k * (2 * (Vgs - vto)*Vds - pow(Vds, 2))) - Gm * Vgs - Go * Vds);
+
 		} else {
-			// Saturation
+			// Saturation (with Early voltage)
 			Gm = 2 * k * (Vgs - vto) * (1 + Vds / va);
-			Go = 2 * k * pow(Vgs - vto, 2) / va;
-			Id = - (k * pow(Vgs - vto, 2) * (1 + Vds / va) - Gm * Vgs - Go * Vds);
+			Go = k * pow(Vgs-vto, 2) / va;
+			Id = -((k * pow(Vgs - vto, 2) * (1 + Vds / va)) - Gm * Vgs - Go * Vds);
+
+			// Saturation (without Early voltage)
+			// Gm = 2 * k * (Vgs - vto);
+			// Go = 0;
+			// Id = -((k * pow(Vgs - vto, 2)) - Gm * Vgs - Go * Vds);
 		}
 	} else {
 		// Cut-off
