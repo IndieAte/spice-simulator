@@ -445,6 +445,8 @@ std::vector<Component*> decode_file(std::ifstream& infile, int& nNodes, Command*
 						} else {
 							throw std::invalid_argument("Invalid Formatting of OP Command");
 						}
+					} else if (line_vector[0] == ".end") {
+						return comps;
 					}
 					break;
 				}
