@@ -24,7 +24,7 @@ std::vector<std::string> string_split(const std::string& s, char split) {
 // It also can check if the string int or decimal
 bool is_number(std::string s, bool dec_check) {
 	int counter = 0;
-	for (int i=0; i<s.length(); i++) if (isdigit(s[counter]) || (s[counter] == '.' && dec_check)) counter++;
+	for (int i=0; i<s.length(); i++) if (isdigit(s[counter]) || s[counter] == '-' || (s[counter] == '.' && dec_check)) counter++;
 	return counter == s.length();
 }
 
@@ -77,9 +77,11 @@ double decode_value(std::string s) {
 	}
 
 	std::string front = s.substr(0,counter+1);
+	std::cout << front << std::endl;
 	try {
 		if (is_number(front, true)) {
 			double d = std::stod(front);
+			std::cout << d << std::endl << std::endl;
 			if (end == "p") {
 				return d * 0.000000000001;
 			} else if (end == "n") {
@@ -263,9 +265,23 @@ Model* get_model(std::string model_name, std::string model_type, std::vector<Mod
 		if (model_name == models[i]->name && model_type == models[i]->component) return models[i];
 	}
 
+	std::cout << "No model matching: '" << model_name << "'. Creating a new default model." << std::endl;
+
 	std::vector<std::string> tmp;
-	tmp.push_back(model_type);
 	tmp.push_back(model_name);
+
+	std::string model_component;
+	if (model_type == "D") model_component = "D";
+	else if (model_type == "Q") {
+		if (model_name == "PNP") model_component = "PNP";
+		else model_component = "NPN";
+	}
+	else if (model_type == "M") {
+		if (model_name == "PMOS") model_component = "PMOS";
+		else model_component == "NMOS";
+	}
+	tmp.push_back(model_component);
+	
 	tmp.push_back("()");
 	Model* new_model = create_model(tmp);
 
